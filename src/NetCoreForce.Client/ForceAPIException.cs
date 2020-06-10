@@ -13,6 +13,12 @@ namespace NetCoreForce.Client
         // public string ErrorCode { get; private set; }
         public HttpStatusCode HttpStatusCode { get; private set; }
 
+        /// <summary>
+        /// Returned when an external ID exists in more than one record
+        /// Lists matching objects in object url format, e.g. "/services/data/v44.0/sobjects/Account/001XXXXXXXXXXXXXXX"
+        /// </summary>
+        public List<string> ObjectUrls { get; set; }
+
         public ForceApiException(string message)
             : this(message, new List<ErrorResponse>(), new HttpStatusCode())
         {
@@ -34,18 +40,5 @@ namespace NetCoreForce.Client
             Errors = errors;
             HttpStatusCode = httpStatusCode;
         }
-
-        // public ForceApiException(List<ErrorResponse> errors, HttpStatusCode httpStatusCode)
-        //     : base()
-        // {
-        //     Errors = errors;
-        //     HttpStatusCode = httpStatusCode;
-        // }
-
-        // private static Error ParseError(string error)
-        // {
-        //     Error value;
-        //     return Enum.TryParse(error.Replace("_", ""), true, out value) ? value : Error.Unknown;
-        // }
     }
 }

@@ -13,7 +13,7 @@
     <Description>A .NET Standard and .NET Core Salesforce Linq query writer</Description>
     <IsPackable>true</IsPackable>
     <PackageId>NetCoreForce.Linq</PackageId>
-    <PackageLicenseUrl>$(PackageLicenseUrl)</PackageLicenseUrl>
+    <PackageLicenseExpression>$(PackageLicenseExpression)</PackageLicenseExpression>
     <PackageProjectUrl>$(PackageProjectUrl)</PackageProjectUrl>
     <PackageRequireLicenseAcceptance>$(PackageRequireLicenseAcceptance)</PackageRequireLicenseAcceptance>
     <PackageTags>$(PackageTags)</PackageTags>
@@ -34,10 +34,13 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="11.0.1" />
-    <PackageReference Include="System.Interactive.Async.Providers" Version="3.1.1" />
+    <PackageReference Include="System.Interactive.Async.Providers" Version="3.2.0" />
     <PackageReference Include="System.Linq.Queryable" Version="4.3.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\NetCoreForce.Client\NetCoreForce.Client.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Extensions\" />
   </ItemGroup>
 </Project>

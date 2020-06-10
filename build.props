@@ -1,13 +1,13 @@
 <Project>
   <PropertyGroup>
     <!--Versioning-->
-    <VersionPrefix>2.5.0</VersionPrefix>
+    <VersionPrefix>2.6.0</VersionPrefix>
     <VersionSuffix></VersionSuffix>
 
     <!--NuGet-->
     <Authors>Anthony Reilly</Authors>
-    <Copyright>2018 Anthony Reilly</Copyright>    
-    <PackageLicenseUrl>https://github.com/anthonyreilly/NetCoreForce/blob/master/LICENSE.md</PackageLicenseUrl>
+    <Copyright>2019 Anthony Reilly</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/anthonyreilly/NetCoreForce</PackageProjectUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageTags>salesforce,api,forcedotcom,netstandard,netcore</PackageTags>

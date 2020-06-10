@@ -1,7 +1,9 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using NetCoreForce.Linq.Conventions.Naming;
 using NetCoreForce.Linq.Entity;
+using NetCoreForce.Linq.Extensions;
 using NetCoreForce.Models;
 using Xunit;
 
@@ -203,6 +205,48 @@ namespace NetCoreForce.Linq.Tests
                     .ToString();
 
             Assert.Equal("SELECT id FROM Case SKIP 10", soql);
+        }
+
+        [Fact]
+        public void OrderQuery()
+        {
+            var soql =
+                Query<SfCase>(SelectTypeEnum.SelectIdAndUseAttachModel, out var provider)
+                    .OrderBy(x => x.Subject)
+                    .ToString();
+
+            Assert.Equal("SELECT id FROM Case ORDER BY subject", soql);
+        }
+
+        [Fact]
+        public void OrderDescendingQuery()
+        {
+            var soql =
+                Query<SfCase>(SelectTypeEnum.SelectIdAndUseAttachModel, out var provider)
+                    .OrderByDescending(x => x.Subject)
+                    .ToString();
+
+            Assert.Equal("SELECT id FROM Case ORDER BY subject DESC", soql);
+        }
+
+        [Fact]
+        public void IncludesQuery()
+        {
+            var soql =
+                Query<SfCase>(SelectTypeEnum.SelectIdAndUseAttachModel, out var provider)
+                    .Where(x => x.Type.Includes("test1;test2"))
+                    .ToString();
+            Assert.Equal("SELECT id FROM Case WHERE (type INCLUDES('test1;test2'))", soql);
+        }
+
+        [Fact]
+        public void ExcludesQuery()
+        {
+            var soql =
+                Query<SfCase>(SelectTypeEnum.SelectIdAndUseAttachModel, out var provider)
+                    .Where(x => x.Type.Excludes("test1;test2"))
+                    .ToString();
+            Assert.Equal("SELECT id FROM Case WHERE (type EXCLUDES('test1;test2'))", soql);
         }
     }
 }

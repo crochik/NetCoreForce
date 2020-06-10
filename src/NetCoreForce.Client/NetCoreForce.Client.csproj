@@ -12,7 +12,7 @@
     <Description>A .NET Standard and .NET Core Salesforce REST API toolkit and API wrapper</Description>
     <IsPackable>true</IsPackable>
     <PackageId>NetCoreForce.Client</PackageId>
-    <PackageLicenseUrl>$(PackageLicenseUrl)</PackageLicenseUrl>
+    <PackageLicenseExpression>$(PackageLicenseExpression)</PackageLicenseExpression>
     <PackageProjectUrl>$(PackageProjectUrl)</PackageProjectUrl>
     <PackageRequireLicenseAcceptance>$(PackageRequireLicenseAcceptance)</PackageRequireLicenseAcceptance>
     <PackageTags>$(PackageTags)</PackageTags>
@@ -34,6 +34,6 @@
   <ItemGroup>
     <PackageReference Include="System.Text.Encodings.Web" Version="4.4.0" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.1" />
-    <PackageReference Include="System.Interactive.Async" Version="3.1.1" />
+    <PackageReference Include="System.Interactive.Async" Version="3.2.0" />
   </ItemGroup>
 </Project>
