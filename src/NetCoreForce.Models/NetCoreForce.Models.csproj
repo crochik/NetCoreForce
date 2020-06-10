@@ -28,10 +28,10 @@
     <!-- warning CS1587: XML comment is not placed on a valid language element -->
     <NoWarn>CS1591,CS1587</NoWarn>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+  <!-- <PropertyGroup Condition="'$(Configuration)'=='Release'">
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageOutputPath>$(SolutionDir)/packages</PackageOutputPath>
-  </PropertyGroup>
+  </PropertyGroup> -->
   <ItemGroup>
     <ProjectReference Include="..\NetCoreForce.Client\NetCoreForce.Client.csproj" />
   </ItemGroup>
