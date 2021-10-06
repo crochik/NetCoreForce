@@ -33,9 +33,9 @@
     <PackageOutputPath>$(SolutionDir)/packages</PackageOutputPath>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="11.0.1" />
+    <!-- <PackageReference Include="Newtonsoft.Json" Version="11.0.1" /> -->
     <PackageReference Include="System.Interactive.Async.Providers" Version="3.2.0" />
-    <PackageReference Include="System.Linq.Queryable" Version="4.3.0" />
+    <PackageReference Include="System.Linq.Queryable" Version="12.0.3" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\NetCoreForce.Client\NetCoreForce.Client.csproj" />
