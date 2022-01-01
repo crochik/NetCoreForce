@@ -271,3 +271,5 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
 *.pyc
+src/NetCoreForce.Client/.DS_Store
+src/NetCoreForce.Models/.DS_Store
