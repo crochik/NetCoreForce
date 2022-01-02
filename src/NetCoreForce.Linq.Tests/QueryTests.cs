@@ -1,9 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using NetCoreForce.Linq.Conventions.Naming;
 using NetCoreForce.Linq.Entity;
-using NetCoreForce.Linq.Extensions;
 using NetCoreForce.Models;
 using Xunit;
 
@@ -22,7 +22,7 @@ namespace NetCoreForce.Linq.Tests
         {
             await
                 Query<SfCase>(SelectTypeEnum.SelectIdAndUseAttachModel, out var provider)
-                    .ToList();
+                    .ToListAsync();
             
             Assert.Equal("SELECT id FROM Case", provider.SOQLCalled);
         }
@@ -32,7 +32,7 @@ namespace NetCoreForce.Linq.Tests
         {
             await
                 Query<SfCase>(SelectTypeEnum.SelectIdAndUseAttachModel, out var provider)
-                    .FirstOrDefault();
+                    .FirstOrDefaultAsync();
             
             Assert.Equal("SELECT id FROM Case LIMIT 2", provider.SOQLCalled);
         }
@@ -43,7 +43,7 @@ namespace NetCoreForce.Linq.Tests
         {
             await
                 Query<SfCase>(SelectTypeEnum.SelectIdAndUseAttachModel, out var provider)
-                    .SingleOrDefault();
+                    .SingleOrDefaultAsync();
             
             Assert.Equal("SELECT id FROM Case LIMIT 2", provider.SOQLCalled);
         }
@@ -53,7 +53,7 @@ namespace NetCoreForce.Linq.Tests
         {
             await
                 Query<SfCase>(SelectTypeEnum.SelectIdAndUseAttachModel, out var provider)
-                    .Count();
+                    .CountAsync();
             
             Assert.Equal("SELECT COUNT() FROM Case", provider.SOQLCalled);
         }
@@ -62,15 +62,11 @@ namespace NetCoreForce.Linq.Tests
         [Fact]
         public void SimpleAllQuery()
         {
-            var soql =
-                Query<SfCase>(SelectTypeEnum.SelectAllAndUseAttachModel, out var provider)
-                    .ToString();
+            string soql = Query<SfTopic>(SelectTypeEnum.SelectAllAndUseAttachModel, out var provider).ToString();
 
-            Assert.Equal("SELECT " +
-                         "id,caseNumber,contactId,accountId,assetId,parentId,suppliedName,suppliedEmail,suppliedPhone,suppliedCompany," +
-                         "type,status,reason,origin,subject,priority,description,ownerId,createdById,lastModifiedById," +
-                         "contactPhone,contactMobile,contactEmail,contactFax " +
-                         "FROM Case", soql);
+            //currently returning "SELECT id,name,description,createdById,managedTopicType FROM Topic"
+
+            Assert.Equal("SELECT id,name,description,createdById,createdBy,createdDate,talkingAbout,managedTopicType,systemModstamp FROM Topic", soql);
         }
 
         [Fact]
@@ -142,6 +138,16 @@ namespace NetCoreForce.Linq.Tests
         }
 
         [Fact]
+        public void WhereBoolQuery()
+        {
+            var soql =
+                Query<SfCase>(SelectTypeEnum.SelectIdAndUseAttachModel, out var provider)
+                    .Where(x => x.IsClosed == true)
+                    .ToString();
+            Assert.Equal("SELECT id FROM Case WHERE (isClosed = TRUE)", soql);
+        }
+
+        [Fact]
         public void WhereStringQuery()
         {
             var soql =
@@ -191,7 +197,7 @@ namespace NetCoreForce.Linq.Tests
             var soql =
                 Query<SfCase>(SelectTypeEnum.SelectIdAndUseAttachModel, out var provider)
                     .Take(20)
-                    .Single();
+                    .SingleAsync();
 
             //Assert.Equal("SELECT id FROM Case LIMIT 2", soql);
         }

@@ -5,9 +5,9 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using NetCoreForce.Linq.Conventions.Naming;
 using NetCoreForce.Linq.Entity;
-using NetCoreForce.Linq.Extensions;
 
 namespace NetCoreForce.Linq
 {
@@ -58,7 +58,7 @@ namespace NetCoreForce.Linq
             var sb = new StringBuilder();
             string selectString;
 
-            if (QueryType == QueryTypeEnum.Any || QueryType == QueryTypeEnum.Count)
+            if (QueryType == QueryTypeEnum.AnyAsync || QueryType == QueryTypeEnum.CountAsync)
             {
                 selectString = "COUNT()";
             }
@@ -141,34 +141,43 @@ namespace NetCoreForce.Linq
                         this.Visit(m.Arguments[0]);
                         break;
 
-                    case nameof(AsyncQueryable.First):
-                    case nameof(AsyncQueryable.FirstOrDefault):
-                    case nameof(AsyncQueryable.Single):
-                    case nameof(AsyncQueryable.SingleOrDefault):
-                        
+                    case nameof(AsyncQueryable.FirstAsync):
+                    case nameof(AsyncQueryable.FirstOrDefaultAsync):
+                    case nameof(AsyncQueryable.SingleAsync):
+                    case nameof(AsyncQueryable.SingleOrDefaultAsync):
+
                         QueryType = (QueryTypeEnum) Enum.Parse(typeof(QueryTypeEnum), methodName);
                         Take = 2;
                         if (m.Arguments.Count > 1)
                         {
-                            WhereExpression.Insert(0, (this.Visit(m.Arguments[1]) as ConstantExpression).Value.ToString());
+                            ConstantExpression ce = this.Visit(m.Arguments[1]) as ConstantExpression;
+                            if (ce?.Value != null)
+                            {
+                                WhereExpression.Insert(0, ce.Value.ToString());
+                            }
                         }
 
                         this.Visit(m.Arguments[0]);
                         break;
-                        
-                    case nameof(AsyncQueryable.ToList):
-                        QueryType = QueryTypeEnum.List;
+
+                    case nameof(AsyncQueryable.ToListAsync):
+                        QueryType = QueryTypeEnum.ListAsync;
 
                         this.Visit(m.Arguments[0]);
 
                         break;
 
-                    case nameof(AsyncQueryable.Any):
-                    case nameof(AsyncQueryable.Count):
+                    case nameof(AsyncQueryable.AnyAsync):
+                    case nameof(AsyncQueryable.CountAsync):
+
                         QueryType = (QueryTypeEnum) Enum.Parse(typeof(QueryTypeEnum), methodName);
                         if (m.Arguments.Count > 1)
                         {
-                            WhereExpression.Insert(0, (this.Visit(m.Arguments[1]) as ConstantExpression).Value.ToString());
+                            ConstantExpression ce = this.Visit(m.Arguments[1]) as ConstantExpression;
+                            if (ce?.Value != null)
+                            {
+                                WhereExpression.Insert(0, ce.Value.ToString());
+                            }
                         }
 
                         this.Visit(m.Arguments[0]);
@@ -180,15 +189,22 @@ namespace NetCoreForce.Linq
                         break;
 
                     case nameof(AsyncQueryable.Where):
-                        WhereExpression.Insert(0, (this.Visit(m.Arguments[1]) as ConstantExpression).Value.ToString());
+                        if (m.Arguments.Count > 1)
+                        {
+                            ConstantExpression ce = this.Visit(m.Arguments[1]) as ConstantExpression;
+                            if (ce?.Value != null)
+                            {
+                                WhereExpression.Insert(0, ce.Value.ToString());
+                            }
+                        }
                         this.Visit(m.Arguments[0]);
                         break;
 
                     case nameof(AsyncQueryable.OrderBy):
                     {
-                        if (this.Visit(m.Arguments[1]) is ConstantExpression constantExpression)
+                        if (this.Visit(m.Arguments[1]) is ConstantExpression ce && ce.Value != null)
                         {
-                            OrderByExpression.Insert(0, constantExpression.Value.ToString());
+                            OrderByExpression.Insert(0, ce.Value.ToString());
                         }
 
                         this.Visit(m.Arguments[0]);
@@ -197,11 +213,10 @@ namespace NetCoreForce.Linq
 
                     case nameof(AsyncQueryable.OrderByDescending):
                     {
-                        if (this.Visit(m.Arguments[1]) is ConstantExpression constantExpression)
+                        if (this.Visit(m.Arguments[1]) is ConstantExpression ce && ce.Value != null)
                         {
-                            OrderByExpression.Insert(0, constantExpression.Value.ToString() + " DESC");
+                            OrderByExpression.Insert(0, ce.Value.ToString() + " DESC");
                         }
-
                         this.Visit(m.Arguments[0]);
                         break;
                     }
@@ -250,11 +265,11 @@ namespace NetCoreForce.Linq
                 }
             }
 
-            else if (m.Method.DeclaringType == typeof(StringExtensions))
+            else if (m.Method.DeclaringType == typeof(NetCoreForceStringExtensions))
             {
                 switch (m.Method.Name)
                 {
-                    case nameof(StringExtensions.Includes):
+                    case nameof(NetCoreForceStringExtensions.Includes):
                     {
                         var result = string.Format("({0} INCLUDES('{1}'))",
                             (this.Visit(m.Arguments[0]) as ConstantExpression).Value.ToString(),
@@ -262,7 +277,7 @@ namespace NetCoreForce.Linq
 
                         return Expression.Constant(result);
                     }
-                    case nameof(StringExtensions.Excludes):
+                    case nameof(NetCoreForceStringExtensions.Excludes):
                     {
                         var result = string.Format("({0} EXCLUDES('{1}'))",
                             (this.Visit(m.Arguments[0]) as ConstantExpression).Value.ToString(),
@@ -360,6 +375,9 @@ namespace NetCoreForce.Linq
 
                     return Expression.Constant($"'{escapedString}'");
 
+                case bool boolean:
+                    return Expression.Constant(boolean ? "TRUE" : "FALSE");
+
                 case null:
                     return Expression.Constant("NULL");
                 
@@ -379,9 +397,12 @@ namespace NetCoreForce.Linq
                 case DateTimeOffset dateTimeOffset:
                     return Expression.Constant(dateTimeOffset.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.ffffZ"));
 
+                case CancellationToken ct:
+                    //Ignore
+                    return null;
                 case object o:
                     throw new NotSupportedException($"The constant for '{o}' ({o.GetType().Name}) is not supported");
-                
+
                 default:
                     return Expression.Constant(c.Value.ToString());
             }

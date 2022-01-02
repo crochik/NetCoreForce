@@ -2,21 +2,23 @@
 
 Generates model classes according to your enviroment, optionally including any custom objects or fields. One file per class, named [ClassName].cs
 
-This is packaged as a custom dotnet CLI tool. You can add it via
+This is packaged as a custom .NET CLI tool. You can add it via
 ```
-dotnet add package NetCoreForce.ModelGenerator
-```
-However, you may need to manually update your csproj to add it as a DotNetCliToolReference like other CLI tools, since currently the add package commands will incorrectly add it as a dependency:
-
-```xml
-<ItemGroup>
-  <DotNetCliToolReference Include="NetCoreForce.ModelGenerator" Version="X.X.X" />
-</ItemGroup>
+dotnet tool install --global NetCoreForce.ModelGenerator
 ```
 
-Then you will be able to use the tool by invoking it as a dotnet command:
+----
+By default, .Net tools are installed in these locations:
+
+OS|Location
+----|----
+Linux/MacOS | ~/.dotnet/tools
+Windows | %USERPROFILE%\\.dotnet\tools
+----
+
+Then you will be able to use the tool by invoking it as a global dotnet command:
 ```
-dotnet modelgenerator generate --help
+NetCoreForce.ModelGenerator generate --help
 
 Usage: modelgenerator generate [options]
 
@@ -35,23 +37,27 @@ Options:
   -n|--namespace <namespace>         Namespace to use for generated classes
   -c|--include-custom                Include custom objects and fields
   -r|--include-references            Include referenced objects as properties
-
-You can supply the API credentials either in the config file, the command parameters, or wait to be interactively prompted for that information.
-If you choose to save the config file, be careful with it as it may contain your API credentials.
 ```
+You can supply the API credentials either in the config file, the command parameters, or wait to be interactively prompted for that information.
 
-  There are a few SObjects that either have reserved names (e.g. Namespace, Domain), or may otherwise cause confustion with other C# objects (e.g. Task).
-  To avoid this, the prefix/suffix option can append a prefix/suffix to the class names, e.g use a "Sf" prefix to end up with SfTask instead of Task.
-  Using the prefix is recommended - it is safer, and it makes intellisense easier since you can start with "Sf" to filter the SF object models.
-  the triple-slash Summary documentation tags on the generated classes will specify the original SObject name, and is exposed by the static SObjectTypeName property.
+## Object Naming
+
+There are a few SObjects that either have reserved names (e.g.Namespace, Domain), or may otherwise cause confustion with other C#objects (e.g. Task).
+To avoid this, the prefix/suffix option can append a prefix/suffix tothe class names, e.g use a "Sf" prefix to end up with SfTask insteadof Task.
+Using the prefix is recommended - it is safer, and it makesintellisense easier since you can start with "Sf" to filter the SFobject models.
+the triple-slash Summary documentation tags on the generated classeswill specify the original SObject name, and is exposed by the staticSObjectTypeName property.
 
 ## Configuration
 
-No configuration file is required, however you can include the --save-config option with an optional filename or file path to save the API credentials and generation options to. the filename will default to modelgenerator-config.json in the local directory for saving and loading if not otherwise specified.
+No configuration file is required, however you can include the --save-config option with an optional filename or file path to save the API credentials and generation options to. the filename will default to modelgenerator-config.json in the local directory for saving and loading if not otherwise specified.  
+
+Using --save-config can be very useful so you do not need to re-enter your auth info and options after your first interactive session.
+
+However, if you choose to save the config file, be careful with it as it does contain your API credentials.
 
 ## Example usage
   ```
-  dotnet modelgenerator generate -p Sf -r -c -n MyProject.Models -d ~/git/myproject.models 
+  NetCoreForce.ModelGenerator generate -p Sf -r -c -n MyProject.Models -d ~/git/myproject.models 
   ```
   * Prefix classes with "Sf"
   * Include referenced objects
@@ -68,7 +74,7 @@ No configuration file is required, however you can include the --save-config opt
     "clientSecret": "your_client_secret",
     "username": "username",
     "password": "password",
-    "apiVersion": "v41.0",
+    "apiVersion": "v50.0",
     "authorizationEndpoint": "https://login.salesforce.com/services/oauth2/authorize",
     "tokenRequestEndpoint": "https://login.salesforce.com/services/oauth2/token",
     "tokenRevocationEndpoint": "https://login.salesforce.com/services/oauth2/revoke"

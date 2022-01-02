@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net.Http;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using NetCoreForce.Client.Models;
@@ -214,29 +214,17 @@ namespace NetCoreForce.Client
         /// <param name="queryString">SOQL query string, without any URL escaping/encoding</param>
         /// <param name="queryAll">Optional. True if deleted records are to be included.await Defaults to false.</param>
         /// <param name="batchSize">Optional. Size of result batches between 200 and 2000</param>
+        /// <param name="cancellationToken">Optional. Cancellation token</param>
         /// <returns><see cref="IAsyncEnumerable{T}"/> of results</returns>
-        public IAsyncEnumerable<T> QueryAsync<T>(string queryString, bool queryAll = false, int? batchSize = null)
-        {
-            return AsyncEnumerable.CreateEnumerable(() => QueryAsyncEnumerator<T>(queryString, queryAll, batchSize));
-        }
-
-        /// <summary>
-        /// Retrieve a <see cref="IAsyncEnumerator{T}"/> using a SOQL query. Batches will be retrieved asynchronously.
-        /// <para>When using the iterator, the initial result batch will be returned as soon as it is received. The additional result batches will be retrieved only as needed.</para>
-        /// </summary>
-        /// <param name="queryString">SOQL query string, without any URL escaping/encoding</param>
-        /// <param name="queryAll">Optional. True if deleted records are to be included.await Defaults to false.</param>
-        /// <param name="batchSize">Optional. Size of result batches between 200 and 2000</param>
-        /// <returns><see cref="IAsyncEnumerator{T}"/> of results</returns>
-        public IAsyncEnumerator<T> QueryAsyncEnumerator<T>(string queryString, bool queryAll = false, int? batchSize = null)
+        public async IAsyncEnumerable<T> QueryAsync<T>(string queryString, bool queryAll = false, int? batchSize = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             Dictionary<string, string> headers = new Dictionary<string, string>();
 
-            //Add call options
+            // Add call options
             Dictionary<string, string> callOptions = HeaderFormatter.SforceCallOptions(ClientName);
             headers.AddRange(callOptions);
 
-            //Add query options headers if batch size specified
+            // Add query options headers if batch size specified
             if (batchSize.HasValue)
             {
                 Dictionary<string, string> queryOptions = HeaderFormatter.SforceQueryOptions(batchSize.Value);
@@ -245,66 +233,33 @@ namespace NetCoreForce.Client
 
             var jsonClient = new JsonClient(AccessToken, _httpClient);
 
-            // Enumerator on the current batch items
-            IEnumerator<T> currentBatchEnumerator = null;
-            var done = false;
             var nextRecordsUri = UriFormatter.Query(InstanceUrl, ApiVersion, queryString, queryAll);
+            bool hasMoreRecords = true;
 
-            return AsyncEnumerable.CreateEnumerator(MoveNextAsync, Current, Dispose);
-
-            async Task<bool> MoveNextAsync(CancellationToken token)
+            while (hasMoreRecords)
             {
-                if (token.IsCancellationRequested)
-                {
-                    return false;
-                }
-
-                // If items remain in the current Batch enumerator, go to next item
-                if (currentBatchEnumerator?.MoveNext() == true)
-                {
-                    return true;
-                }
-
-                // if done, no more items.
-                if (done)
-                {
-                    return false;
-                }
-
-                // else : no enumerator or currentBatchEnumerator ended
-                // so get the next batch
                 var qr = await jsonClient.HttpGetAsync<QueryResult<T>>(nextRecordsUri, headers);
 
 #if DEBUG
                 Debug.WriteLine($"Got query resuts, {qr.TotalSize} totalSize, {qr.Records.Count} in this batch, final batch: {qr.Done}");
 #endif
 
-                currentBatchEnumerator = qr.Records.GetEnumerator();
-
                 if (!string.IsNullOrEmpty(qr.NextRecordsUrl))
                 {
                     nextRecordsUri = new Uri(new Uri(InstanceUrl), qr.NextRecordsUrl);
-                    done = false;
+                    hasMoreRecords = true;
                 }
                 else
                 {
-                    //Normally if query has remaining batches, NextRecordsUrl will have a value, and Done will be false.
-                    //In case of some unforseen error, flag the result as done if we're missing the NextRecordsURL
-                    done = true;
+                    // Normally if a query has remaining batches, NextRecordsUrl will have a value, and Done will be false.
+                    // In case of some unforseen error, consider the results done if we're missing the NextRecordsURL
+                    hasMoreRecords = false;
                 }
 
-                return currentBatchEnumerator.MoveNext();
-            }
-
-            T Current()
-            {
-                return currentBatchEnumerator == null ? default(T) : currentBatchEnumerator.Current;
-            }
-
-            void Dispose()
-            {
-                currentBatchEnumerator?.Dispose();
-                jsonClient.Dispose();
+                foreach (T record in qr.Records)
+                {
+                    yield return record;
+                }
             }
         }
 
@@ -463,6 +418,56 @@ namespace NetCoreForce.Client
         }
 
         /// <summary>
+        /// Update multiple reocrds.
+        /// The list can contain up to 200 objects.
+        /// The list can contain objects of different types, including custom objects.
+        /// Each object must contain an attributes map. The map must contain a value for type.
+        /// Each object must contain an id field with a valid ID value.
+        /// </summary>
+        /// <param name="sObjects">Objects to update</param>
+        /// <param name="allOrNone">Optional. Indicates whether to roll back the entire request when the update of any object fails (true) or to continue with the independent update of other objects in the request. The default is false.</param>
+        /// <param name="customHeaders">Custom headers to include in request (Optional). await The HeaderFormatter helper class can be used to generate the custom header as needed.</param>
+        /// <returns>List of UpdateMultipleResponse objects, includes response for each object (id, success, errors)</returns>
+        /// <exception cref="ArgumentException">Thrown when missing required information</exception>
+        /// <exception cref="ForceApiException">Thrown when update fails</exception>
+        public async Task<List<UpdateMultipleResponse>> UpdateRecords(List<SObject> sObjects, bool allOrNone = false, Dictionary<string, string> customHeaders = null)
+        {
+            if(sObjects == null)
+            {
+                throw new ArgumentNullException("sObjects");
+            }
+
+            foreach(SObject sObject in sObjects)
+            {
+                if(sObject.Attributes == null || string.IsNullOrEmpty(sObject.Attributes.Type))
+                {
+                    throw new ForceApiException("Objects are missing Type property in Attributes map");
+                }
+            }
+
+            Dictionary<string, string> headers = new Dictionary<string, string>();
+
+            //Add call options
+            Dictionary<string, string> callOptions = HeaderFormatter.SforceCallOptions(ClientName);
+            headers.AddRange(callOptions);
+
+            //Add custom headers if specified
+            if (customHeaders != null)
+            {
+                headers.AddRange(customHeaders);
+            }
+
+            var uri = UriFormatter.SObjectsComposite(InstanceUrl, ApiVersion);
+
+            JsonClient client = new JsonClient(AccessToken, _httpClient);
+
+            UpdateMultipleRequest updateMultipleRequest = new UpdateMultipleRequest(sObjects, allOrNone);
+
+            return await client.HttpPatchAsync<List<UpdateMultipleResponse>>(updateMultipleRequest, uri, headers, includeSObjectId: true);
+            
+        }
+
+        /// <summary>
         /// Inserts or Updates a records based on external id
         /// </summary>
         /// <param name="sObjectTypeName">SObject name, e.g. "Account"</param>
@@ -512,7 +517,7 @@ namespace NetCoreForce.Client
             return;
         }
 
-        #region metadata
+#region metadata
 
         /// <summary>
         /// Lists information about limits in your org.
@@ -620,7 +625,7 @@ namespace NetCoreForce.Client
             return await client.HttpGetAsync<DescribeGlobal>(uri);
         }
 
-        #endregion
+#endregion
 
     }
 }

@@ -1,5 +1,52 @@
 # Changelog
 
+### 2021-05-07 v3.0.1
+
+* Fix: incorrect URI when calling organization limits, make URI formatting more consistent
+* ci: Add missing URI formatting tests
+* Dependabot: Bump System.Text.Encodings.Web from 5.0.0 -> 5.0.1
+
+### 2021-02-09 v3.0.0
+
+* v3 release, no changes from Beta2
+
+### 2021-01-28 v3.0.0 Beta2
+
+* NetCoreForce.Client: Removed System.Interactive.Async dependency
+    - Migrated to use native async streams
+    - netstandard2.0 client support via Microsoft.Bcl.AsyncInterfaces
+* NetCoreForce.Client: QueryAsyncEnumerator(), can be replaced by calling GetAsyncEnumerator() on the results of QueryAsync()
+
+### 2021-01-27 v3.0.0 Beta
+
+This a major update, and introduces several breaking changes. It resolves several compatibilty issues with newer .net core versions.
+
+* Drops support for netstandard 1.x
+    - If you require 1.x support, you will need to remain on NetCoreForce 2.x
+* Libraries target netstandard2.0 and netstandard2.1
+* Tests and apps target netcoreapp2.1 and netcoreapp3.1
+* Updated System.Interactive.Async from v3 to v5
+    - When using the asynchronous batch processing features, you will need update to the async versions of the method calls, For example:
+        - GetEnumerator -> GetAsyncEnumerator
+        - ToList -> To ListAsync
+        - SingleOrDefault -> SingleOrDefaultAsync
+        - MoveNext -> MoveNextAsync
+    - When upgrading, you'll get a clear compiler error that the method isn't available, and switching to the one that has "async" in the method name should then compile.
+* Added Microsoft.Bcl.AsyncInterfaces to provide async disposable support for .netstandard2.0 targets
+
+* Converted NetCoreForce.ModelGenerator to be packaged as a global .NET CLI tool.
+    - See the [ReadMe](src/NetCoreForce.Models/README.md) for additional details.
+
+### 2021-01-01 v2.7.0
+
+* Client: Added support for updating multiple objects
+* Client: Added backwards-compatible serialization contract resolver to allow inclusion of object ID on patch requests
+* Linq: Added support for filtering on booleans
+* Client: Added support for NetStandard2.1 (netcoreapp3.x)
+* Models: Update standard models to SF API v50 - Winter '21
+* ModelGenerator: Fixed issue where API version in config file was being ignored, and default of v44 was used instead
+* Build: streamline build targets to use variables from build.props
+
 ### 2019-12-17 v2.6.0
 
 * Fix: Failure to handle/parse HTTP 300 - multiple choices response when update finds multiple external IDs

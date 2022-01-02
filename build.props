@@ -1,12 +1,18 @@
 <Project>
   <PropertyGroup>
     <!--Versioning-->
-    <VersionPrefix>2.6.0</VersionPrefix>
+    <VersionPrefix>3.0.1</VersionPrefix>
     <VersionSuffix></VersionSuffix>
+
+    <!-- Targets -->
+    <LangVersion>8.0</LangVersion>
+    <LibTargetFrameworks>net5.0</LibTargetFrameworks>
+    <AppTargetFrameworks>net5.0</AppTargetFrameworks>
+    <TestTargetFrameworks>net5.0</TestTargetFrameworks>
 
     <!--NuGet-->
     <Authors>Anthony Reilly</Authors>
-    <Copyright>2019 Anthony Reilly</Copyright>
+    <Copyright>2021 Anthony Reilly</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/anthonyreilly/NetCoreForce</PackageProjectUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
