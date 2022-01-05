@@ -6,9 +6,9 @@
 
     <!-- Targets -->
     <LangVersion>8.0</LangVersion>
-    <LibTargetFrameworks>net5.0</LibTargetFrameworks>
-    <AppTargetFrameworks>net5.0</AppTargetFrameworks>
-    <TestTargetFrameworks>net5.0</TestTargetFrameworks>
+    <LibTargetFrameworks>net6.0</LibTargetFrameworks>
+    <AppTargetFrameworks>net6.0</AppTargetFrameworks>
+    <TestTargetFrameworks>net6.0</TestTargetFrameworks>
 
     <!--NuGet-->
     <Authors>Anthony Reilly</Authors>
