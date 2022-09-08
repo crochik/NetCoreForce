@@ -1,6 +1,4 @@
 using System;
-using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,8 +8,6 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using NetCoreForce.Client.Serializer;
 using NetCoreForce.Client.Models;
 
 namespace NetCoreForce.Client
@@ -27,7 +23,7 @@ namespace NetCoreForce.Client
         //By default, and the ideal case, is using the static readonly HttpClient.
         //Alternatively, for testing and special cases, a class instance instnace of an HttpClient can be used instead.
         private static readonly HttpClient _SharedHttpClient;
-        private HttpClient _httpClient;
+        private readonly HttpClient _httpClient;
         private HttpClient SharedHttpClient
         {
             get
@@ -37,7 +33,7 @@ namespace NetCoreForce.Client
             }
         }
 
-        AuthenticationHeaderValue _authHeaderValue;
+        private readonly AuthenticationHeaderValue _authHeaderValue;
 
         /// <summary>
         /// JSON Client static constructor, initializes the default shared HttpClient instance.
@@ -65,38 +61,22 @@ namespace NetCoreForce.Client
 
         public async Task<T> HttpGetAsync<T>(Uri uri, Dictionary<string, string> customHeaders = null, bool deserializeResponse = true)
         {
-            //TODO: can this handle T = string?
-            try
-            {
-                return await HttpAsync<T>(uri, HttpMethod.Get, null, customHeaders, deserializeResponse);
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
+            return await HttpAsync<T>(uri, HttpMethod.Get, null, customHeaders, deserializeResponse);
         }
 
         public async Task<T> HttpPostAsync<T>(object inputObject, Uri uri, Dictionary<string, string> customHeaders = null, bool deserializeResponse = true)
         {
             var json = JsonSerializer.SerializeForCreate(inputObject);
 
-            try
-            {
-                var content = new StringContent(json, Encoding.UTF8, JsonMimeType);
+            var content = new StringContent(json, Encoding.UTF8, JsonMimeType);
 
-                HttpRequestMessage request = new HttpRequestMessage();
-                request.Headers.Authorization = _authHeaderValue;
-                request.RequestUri = uri;
-                request.Method = HttpMethod.Post;
-                request.Content = content;
+            HttpRequestMessage request = new HttpRequestMessage();
+            request.Headers.Authorization = _authHeaderValue;
+            request.RequestUri = uri;
+            request.Method = HttpMethod.Post;
+            request.Content = content;
 
-                return await GetResponse<T>(request, customHeaders, deserializeResponse);
-
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
+            return await GetResponse<T>(request, customHeaders, deserializeResponse);
         }
 
         /// <summary>
@@ -112,68 +92,47 @@ namespace NetCoreForce.Client
         /// <returns></returns>
         public async Task<T> HttpPatchAsync<T>(object inputObject, Uri uri, Dictionary<string, string> customHeaders = null, bool deserializeResponse = true, bool serializeComplete = false, bool includeSObjectId = false)
         {
-            try
+            string json;
+            if (serializeComplete)
             {
-                string json;
-                if (serializeComplete)
-                {
-                    json = JsonSerializer.SerializeComplete(inputObject, false);
-                }
-                else if (includeSObjectId)
-                {
-                    json = JsonSerializer.SerializeForUpdateWithObjectId(inputObject);
-                }
-                else
-                {
-                    json = JsonSerializer.SerializeForUpdate(inputObject);
-                }
-
-                var content = new StringContent(json, Encoding.UTF8, JsonMimeType);
-
-                return await HttpAsync<T>(uri, new HttpMethod("PATCH"), content, customHeaders, deserializeResponse);
+                json = JsonSerializer.SerializeComplete(inputObject, false);
             }
-            catch (Exception ex)
+            else if (includeSObjectId)
             {
-                throw ex;
+                json = JsonSerializer.SerializeForUpdateWithObjectId(inputObject);
             }
+            else
+            {
+                json = JsonSerializer.SerializeForUpdate(inputObject);
+            }
+
+            var content = new StringContent(json, Encoding.UTF8, JsonMimeType);
+
+            return await HttpAsync<T>(uri, new HttpMethod("PATCH"), content, customHeaders, deserializeResponse);
         }
 
         public async Task<T> HttpDeleteAsync<T>(Uri uri, Dictionary<string, string> customHeaders = null, bool deserializeResponse = true)
         {
-            try
-            {
-                HttpRequestMessage request = new HttpRequestMessage();
-                request.Headers.Authorization = _authHeaderValue;
-                request.RequestUri = uri;
-                request.Method = HttpMethod.Delete;
+            HttpRequestMessage request = new HttpRequestMessage();
+            request.Headers.Authorization = _authHeaderValue;
+            request.RequestUri = uri;
+            request.Method = HttpMethod.Delete;
 
-                return await GetResponse<T>(request, customHeaders, deserializeResponse);
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
+            return await GetResponse<T>(request, customHeaders, deserializeResponse);
         }
 
         private async Task<T> HttpAsync<T>(Uri uri, HttpMethod httpMethod, HttpContent content = null, Dictionary<string, string> customHeaders = null, bool deserializeResponse = true)
         {
-            try
+            HttpRequestMessage request = new HttpRequestMessage();
+            request.Headers.Authorization = _authHeaderValue;
+            request.RequestUri = uri;
+            request.Method = httpMethod;
+            if (content != null)
             {
-                HttpRequestMessage request = new HttpRequestMessage();
-                request.Headers.Authorization = _authHeaderValue;
-                request.RequestUri = uri;
-                request.Method = httpMethod;
-                if (content != null)
-                {
-                    request.Content = content;
-                }
+                request.Content = content;
+            }
 
-                return await GetResponse<T>(request, customHeaders, deserializeResponse);
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
+            return await GetResponse<T>(request, customHeaders, deserializeResponse);
         }
 
         /// <summary>
@@ -317,12 +276,11 @@ namespace NetCoreForce.Client
         /// <param name="headers">HttpHeaders from the HttpResponseMessage</param>
         /// <param name="headerName">Header Name</param>
         /// <returns>IEnumerable{string} of header values, if any, Null if none found.</returns>
-        private IEnumerable<string> GetHeaderValues(HttpHeaders headers, string headerName)
+        private static IEnumerable<string> GetHeaderValues(HttpHeaders headers, string headerName)
         {
             if (headers != null)
             {
-                IEnumerable<string> values;
-                if (headers.TryGetValues(headerName, out values))
+                if (headers.TryGetValues(headerName, out IEnumerable<string> values))
                 {
                     return values;
                 }
