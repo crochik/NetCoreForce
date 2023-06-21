@@ -92,4 +92,30 @@ namespace NetCoreForce.Client.Models
             }
         }
     }
+
+    public class IntrospectTokenResponse
+    {
+        public bool Active { get; set; }
+        public string Scope { get; set; }
+        
+        [JsonProperty("client_id")]
+        public string ClientId { get; set; }
+        
+        [JsonProperty("username")]
+        public string UserName { get; set; }
+        
+        public string Sub { get; set; }
+        
+        [JsonProperty("token_type")]
+        public string TokenType { get; set; }
+        
+        [JsonProperty("exp")]
+        public long Expiration { get; set; }
+        
+        [JsonProperty("iat")]
+        public long IssuedAt { get; set; }
+
+        [JsonProperty("nbf")]
+        public long NotBefore { get; set; }
+    }
 }

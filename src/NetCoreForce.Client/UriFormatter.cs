@@ -394,5 +394,26 @@ namespace NetCoreForce.Client
 
             return new Uri(url);
         }
+        
+        public static Uri IntrospectTokenUrl(
+            string instrospectTokenUrl,
+            string token,
+            string clientId,            
+            string clientSecret = "")
+        {
+            if (instrospectTokenUrl == null) throw new ArgumentNullException(nameof(instrospectTokenUrl));
+            if (token == null) throw new ArgumentNullException(nameof(token));
+            if (clientId == null) throw new ArgumentNullException(nameof(clientId));            
+
+            Dictionary<string, string> prms = new Dictionary<string, string>();
+            prms.Add("token", token);
+            prms.Add("client_id", clientId);
+            prms.Add("client_secret", clientSecret);
+            // prms.Add("format", "json");
+
+            string url = QueryHelpers.AddQueryString(instrospectTokenUrl, prms);
+
+            return new Uri(url);
+        }        
     }
 }

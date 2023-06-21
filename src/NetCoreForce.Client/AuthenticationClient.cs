@@ -11,7 +11,11 @@ namespace NetCoreForce.Client
 {
     public class AuthenticationClient : IDisposable
     {
-        private string DefaultApiVersion { get { return "v50.0"; } }
+        private string DefaultApiVersion
+        {
+            get { return "v50.0"; }
+        }
+
         public string ApiVersion { get; set; }
 
         /// <summary>
@@ -29,7 +33,9 @@ namespace NetCoreForce.Client
         /// Initialize the AuthenticationClient with the libary's default Salesforce API version
         /// <para>See the DefaultApiVersion property</para>
         /// </summary>
-        public AuthenticationClient() : this(null) { }
+        public AuthenticationClient() : this(null)
+        {
+        }
 
         /// <summary>
         /// Initialize the AuthenticationClient with the specified Salesforce API version
@@ -91,7 +97,6 @@ namespace NetCoreForce.Client
                 //otherwise throw the original AggregateException as-is
                 throw ex;
             }
-
         }
 
         /// <summary>
@@ -131,13 +136,13 @@ namespace NetCoreForce.Client
             if (!Uri.IsWellFormedUriString(tokenRequestEndpointUrl, UriKind.Absolute)) throw new FormatException("Invalid tokenRequestEndpointUrl");
 
             var content = new FormUrlEncodedContent(new[]
-                {
-                    new KeyValuePair<string, string>("grant_type", "password"),
-                    new KeyValuePair<string, string>("client_id", clientId),
-                    new KeyValuePair<string, string>("client_secret", clientSecret),
-                    new KeyValuePair<string, string>("username", username),
-                    new KeyValuePair<string, string>("password", password)
-                });
+            {
+                new KeyValuePair<string, string>("grant_type", "password"),
+                new KeyValuePair<string, string>("client_id", clientId),
+                new KeyValuePair<string, string>("client_secret", clientSecret),
+                new KeyValuePair<string, string>("username", username),
+                new KeyValuePair<string, string>("password", password)
+            });
 
             var request = new HttpRequestMessage
             {
@@ -193,13 +198,13 @@ namespace NetCoreForce.Client
             if (!Uri.IsWellFormedUriString(tokenRequestEndpointUrl, UriKind.Absolute)) throw new FormatException("tokenRequestEndpointUrl");
 
             var content = new FormUrlEncodedContent(new[]
-                {
-                    new KeyValuePair<string, string>("grant_type", "authorization_code"),
-                    new KeyValuePair<string, string>("client_id", clientId),
-                    new KeyValuePair<string, string>("client_secret", clientSecret),
-                    new KeyValuePair<string, string>("redirect_uri", redirectUri),
-                    new KeyValuePair<string, string>("code", code)
-                });
+            {
+                new KeyValuePair<string, string>("grant_type", "authorization_code"),
+                new KeyValuePair<string, string>("client_id", clientId),
+                new KeyValuePair<string, string>("client_secret", clientSecret),
+                new KeyValuePair<string, string>("redirect_uri", redirectUri),
+                new KeyValuePair<string, string>("code", code)
+            });
 
             var request = new HttpRequestMessage
             {
@@ -228,7 +233,6 @@ namespace NetCoreForce.Client
                 {
                     throw new ForceAuthException("Unknown", ex.Message, responseMessage.StatusCode);
                 }
-
             }
         }
 
@@ -269,6 +273,35 @@ namespace NetCoreForce.Client
                 var errorResponse = JsonConvert.DeserializeObject<AuthErrorResponse>(response);
                 throw new ForceAuthException(errorResponse.Error, errorResponse.ErrorDescription, responseMessage.StatusCode);
             }
+        }
+
+        public async Task<IntrospectTokenResponse> IntrospectTokenAsync(string accessToken, string clientId, string clientSecret, string introspectTokenEndpointUrl)
+        {
+            var uri = UriFormatter.IntrospectTokenUrl(
+                introspectTokenEndpointUrl,
+                accessToken,
+                clientId,
+                clientSecret);
+
+            var request = new HttpRequestMessage
+            {
+                Method = HttpMethod.Post,
+                RequestUri = uri
+            };
+
+            request.Headers.UserAgent.ParseAdd(string.Concat(UserAgent, "/", ApiVersion));
+            request.Headers.Accept.ParseAdd("application/json");
+
+            var responseMessage = await _httpClient.SendAsync(request).ConfigureAwait(false);
+            var response = await responseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+            if (responseMessage.IsSuccessStatusCode)
+            {
+                return JsonConvert.DeserializeObject<IntrospectTokenResponse>(response);
+            }
+
+            var errorResponse = JsonConvert.DeserializeObject<AuthErrorResponse>(response);
+            throw new ForceAuthException(errorResponse.Error, errorResponse.ErrorDescription, responseMessage.StatusCode);
         }
 
         public void Dispose()
