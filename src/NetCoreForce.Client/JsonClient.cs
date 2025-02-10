@@ -184,13 +184,13 @@ namespace NetCoreForce.Client
 
             if (responseMessage.StatusCode == HttpStatusCode.NoContent)
             {
-                return JsonConvert.DeserializeObject<T>(string.Empty);
+                return DeserializeObject<T>(string.Empty);
             }
 
             //sucessful response, skip deserialization of response content
             if (responseMessage.IsSuccessStatusCode && !deserializeResponse)
             {
-                return JsonConvert.DeserializeObject<T>(string.Empty);
+                return DeserializeObject<T>(string.Empty);
             }
 
             if (responseMessage.Content != null)
@@ -206,7 +206,7 @@ namespace NetCoreForce.Client
                             throw new ForceApiException("Response content was empty");
                         }
 
-                        return JsonConvert.DeserializeObject<T>(responseContent);
+                        return DeserializeObject<T>(responseContent);
                     }
                     if (responseMessage.StatusCode == HttpStatusCode.MultipleChoices)
                     {
@@ -219,7 +219,7 @@ namespace NetCoreForce.Client
                             throw new ForceApiException("Response content was empty");
                         }
 
-                        var results = JsonConvert.DeserializeObject<List<string>>(responseContent);
+                        var results = DeserializeObject<List<string>>(responseContent);
 
                         var fex = new ForceApiException("Multiple matches for External ID value, see ObjectUrls");
 
@@ -235,7 +235,7 @@ namespace NetCoreForce.Client
 
                         try
                         {
-                            errors = JsonConvert.DeserializeObject<List<ErrorResponse>>(responseContent);
+                            errors = DeserializeObject<List<ErrorResponse>>(responseContent);
 
                             // There will often only be one error code - append this to the message
                             if (errors != null && errors.Count > 0)
@@ -269,6 +269,8 @@ namespace NetCoreForce.Client
 
             throw new ForceApiException(string.Format("Error processing response: returned {0} for {1}", responseMessage.ReasonPhrase, request.RequestUri.ToString()));
         }
+
+        private T DeserializeObject<T>(string json) => JsonConvert.DeserializeObject<T>(json, new JsonSerializerSettings { DateTimeZoneHandling = DateTimeZoneHandling.Utc });
 
         /// <summary>
         /// Get values for a particular reponse header
