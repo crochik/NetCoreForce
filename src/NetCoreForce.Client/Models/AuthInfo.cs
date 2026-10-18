@@ -32,6 +32,19 @@ namespace NetCoreForce.Client.Models
         public string Password { get; set; }
 
         /// <summary>
+        /// Current supported auth methods
+        /// </summary>
+        public enum AuthMethodType {
+            UsernamePassword = 1,
+            ClientCredentials = 2,
+        }
+        /// <summary>
+        /// Auth type
+        /// </summary>
+        [JsonProperty(PropertyName = "authMethod")]
+        public AuthMethodType? AuthMethod { get; set; }
+
+        /// <summary>
         /// Salesforce API version
         /// </summary>
         [JsonProperty(PropertyName = "apiVersion")]
@@ -58,5 +71,19 @@ namespace NetCoreForce.Client.Models
         /// </summary>
         [JsonProperty(PropertyName = "tokenRevocationEndpoint")]
         public string TokenRevocationEndpoint { get; set; }
+
+        /// <summary>
+        /// Optional refresh token, for testing <see cref="AuthenticationClient.TokenRefreshAsync" />.
+        /// <para>The username-password auth flow does not return a refresh token, so this must be obtained separately (e.g. via the Web Server OAuth flow) and set manually.</para>
+        /// </summary>
+        [JsonProperty(PropertyName = "refreshToken")]
+        public string RefreshToken { get; set; }
+
+        /// <summary>
+        /// OAuth 2.0 token introspection endpoint URL
+        /// <para>e.g. https://login.salesforce.com/services/oauth2/introspect </para>
+        /// </summary>
+        [JsonProperty(PropertyName = "tokenIntrospectionEndpoint")]
+        public string TokenIntrospectionEndpoint { get; set; }
     }
 }

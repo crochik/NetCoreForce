@@ -1,11 +1,12 @@
 using System;
+using System.Globalization;
 
 namespace NetCoreForce.Client
 {
     //https://developer.salesforce.com/docs/atlas.en-us.soql_sosl.meta/soql_sosl/sforce_api_calls_soql_select_dateformats.htm
     
     /// <summary>
-    /// Salesforce date format strings
+    /// Provides Salesforce date format strings and methods for converting dates to those formats.
     /// </summary>
     public static class DateFormats
     {
@@ -16,6 +17,12 @@ namespace NetCoreForce.Client
         /// <summary>
         /// Date, time, and time zone offset
         /// </summary>
+        /// <remarks>
+        /// Uses the format "yyyy-MM-ddTHH:mm:sszzz" to output a date string e.g. "2023-10-01T12:34:56-07:00"
+        /// </remarks>
+        /// <returns>
+        /// A string representing the full date format used by Salesforce.
+        /// </returns>        
         public static string FullDateFormatString
         {
             get
@@ -37,7 +44,7 @@ namespace NetCoreForce.Client
 
         public static string FullDateString(DateTimeOffset dto)
         {
-            return dto.ToString(_FullFormat);
+            return dto.ToString(_FullFormat, CultureInfo.InvariantCulture);
         }
 
         /// <summary>
@@ -48,23 +55,26 @@ namespace NetCoreForce.Client
         /// <returns></returns>
         public static string FullDateString(DateTime dt)
         {
-            return dt.ToUniversalTime().ToString(_FullFormat);
+            // the "zzz" format specifier ignores DateTime.Kind on .NET Framework, always using the local
+            // system offset even for Kind.Utc values, so the offset is computed explicitly instead
+            TimeSpan offset = dt.Kind == DateTimeKind.Utc ? TimeSpan.Zero : TimeZoneInfo.Local.GetUtcOffset(dt);
+            return FullDateString(dt, offset);
         }
 
         public static string FullDateString(DateTime dt, TimeSpan offset)
         {
             DateTimeOffset dto = new DateTimeOffset(dt, offset);
-            return dto.ToString(_FullFormat);
+            return dto.ToString(_FullFormat, CultureInfo.InvariantCulture);
         }
 
         public static string DateOnlyString(DateTimeOffset dto)
         {
-            return dto.ToString(_DateOnlyFormat);
+            return dto.ToString(_DateOnlyFormat, CultureInfo.InvariantCulture);
         }
 
         public static string DateOnlyString(DateTime dt)
         {
-            return dt.ToString(_DateOnlyFormat);
+            return dt.ToString(_DateOnlyFormat, CultureInfo.InvariantCulture);
         }
     }
 

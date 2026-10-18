@@ -1,4 +1,4 @@
-// SF API version v50.0
+// SF API version v67.0
 // Custom fields included: False
 // Relationship objects included: True
 
@@ -23,7 +23,7 @@ namespace NetCoreForce.Models
 		}
 
 		///<summary>
-		/// PermissionSetAssignment ID
+		/// Permission Set Assignment ID
 		/// <para>Name: Id</para>
 		/// <para>SF Type: id</para>
 		/// <para>Nillable: False</para>
@@ -33,7 +33,7 @@ namespace NetCoreForce.Models
 		public string Id { get; set; }
 
 		///<summary>
-		/// PermissionSet ID
+		/// Permission Set ID
 		/// <para>Name: PermissionSetId</para>
 		/// <para>SF Type: reference</para>
 		/// <para>Nillable: True</para>
@@ -51,7 +51,7 @@ namespace NetCoreForce.Models
 		public SfPermissionSet PermissionSet { get; set; }
 
 		///<summary>
-		/// PermissionSetGroup ID
+		/// Permission Set Group ID
 		/// <para>Name: PermissionSetGroupId</para>
 		/// <para>SF Type: reference</para>
 		/// <para>Nillable: True</para>
@@ -95,6 +95,35 @@ namespace NetCoreForce.Models
 		[JsonProperty(PropertyName = "systemModstamp")]
 		[Updateable(false), Createable(false)]
 		public DateTimeOffset? SystemModstamp { get; set; }
+
+		///<summary>
+		/// Expires On
+		/// <para>Name: ExpirationDate</para>
+		/// <para>SF Type: datetime</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "expirationDate")]
+		public DateTimeOffset? ExpirationDate { get; set; }
+
+		///<summary>
+		/// Is Active
+		/// <para>Name: IsActive</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "isActive")]
+		[Updateable(false), Createable(false)]
+		public bool? IsActive { get; set; }
+
+		///<summary>
+		/// Is Revoked
+		/// <para>Name: IsRevoked</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "isRevoked")]
+		[Updateable(true), Createable(false)]
+		public bool? IsRevoked { get; set; }
 
 	}
 }

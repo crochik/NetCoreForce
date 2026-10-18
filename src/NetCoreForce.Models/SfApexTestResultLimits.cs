@@ -1,4 +1,4 @@
-// SF API version v50.0
+// SF API version v67.0
 // Custom fields included: False
 // Relationship objects included: True
 
@@ -10,7 +10,7 @@ using Newtonsoft.Json;
 namespace NetCoreForce.Models
 {
 	///<summary>
-	/// Apex Test Result Limit
+	/// Apex Test Result Limits
 	///<para>SObject Name: ApexTestResultLimits</para>
 	///<para>Custom Object: False</para>
 	///</summary>
@@ -23,7 +23,7 @@ namespace NetCoreForce.Models
 		}
 
 		///<summary>
-		/// ApexTestResultLimits ID
+		/// Apex Test Result Limits ID
 		/// <para>Name: Id</para>
 		/// <para>SF Type: id</para>
 		/// <para>Nillable: False</para>
@@ -109,7 +109,7 @@ namespace NetCoreForce.Models
 		public DateTimeOffset? SystemModstamp { get; set; }
 
 		///<summary>
-		/// Apex Test Result ID
+		/// Application Test Result ID
 		/// <para>Name: ApexTestResultId</para>
 		/// <para>SF Type: reference</para>
 		/// <para>Nillable: False</para>
@@ -217,7 +217,7 @@ namespace NetCoreForce.Models
 		public int? MobilePush { get; set; }
 
 		///<summary>
-		/// LimitContext
+		/// Limit Context
 		/// <para>Name: LimitContext</para>
 		/// <para>SF Type: string</para>
 		/// <para>Nillable: True</para>
@@ -226,7 +226,7 @@ namespace NetCoreForce.Models
 		public string LimitContext { get; set; }
 
 		///<summary>
-		/// LimitExceptions
+		/// Limit Exceptions
 		/// <para>Name: LimitExceptions</para>
 		/// <para>SF Type: string</para>
 		/// <para>Nillable: True</para>

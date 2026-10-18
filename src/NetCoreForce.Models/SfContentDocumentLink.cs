@@ -1,4 +1,4 @@
-// SF API version v50.0
+// SF API version v67.0
 // Custom fields included: False
 // Relationship objects included: True
 
@@ -43,7 +43,7 @@ namespace NetCoreForce.Models
 		public string LinkedEntityId { get; set; }
 
 		///<summary>
-		/// ContentDocument ID
+		/// Content Document ID
 		/// <para>Name: ContentDocumentId</para>
 		/// <para>SF Type: reference</para>
 		/// <para>Nillable: False</para>
@@ -71,7 +71,7 @@ namespace NetCoreForce.Models
 		public bool? IsDeleted { get; set; }
 
 		///<summary>
-		/// System Modstamp
+		/// Last Modified Date
 		/// <para>Name: SystemModstamp</para>
 		/// <para>SF Type: datetime</para>
 		/// <para>Nillable: False</para>

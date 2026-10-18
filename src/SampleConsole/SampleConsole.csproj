@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-<Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.props))\build.props" />
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>$(AppTargetFrameworks)</TargetFrameworks>
@@ -9,12 +8,11 @@
   <ItemGroup>
     <ProjectReference Include="..\NetCoreForce.Client\NetCoreForce.Client.csproj" />
     <ProjectReference Include="..\NetCoreForce.Models\NetCoreForce.Models.csproj" />
-  </ItemGroup>  
+  </ItemGroup>
 
   <ItemGroup>
     <None Update="credentials_dev.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-
 </Project>

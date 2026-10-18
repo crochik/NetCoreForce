@@ -1,14 +1,13 @@
+using NetCoreForce.Client.Models;
 using System;
 using System.Collections.Generic;
 using Xunit;
-using NetCoreForce.Client;
-using NetCoreForce.Client.Models;
 
 namespace NetCoreForce.Client.Tests
 {
     public class UriFormatterTest
     {
-        const string _apiVersion = "v41.0";
+        const string _apiVersion = "v57.0";
         const string _instanceUrl = "https://xxx.salesforce.com";
         const string _sObjectName = "Account";
         const string _objectId = "001XXXXXXXXXXXXXXX";
@@ -18,9 +17,9 @@ namespace NetCoreForce.Client.Tests
         [Fact]
         public void SObjectRows()
         {
-            string result = UriFormatter.SObjectRows("https://xxx.salesforce.com", "v41.0", "Account", "001XXXXXXXXXXXXXXX").AbsoluteUri;
+            string result = UriFormatter.SObjectRows("https://xxx.salesforce.com", "v57.0", "Account", "001XXXXXXXXXXXXXXX").AbsoluteUri;
 
-            Assert.Equal("https://xxx.salesforce.com/services/data/v41.0/sobjects/Account/001XXXXXXXXXXXXXXX", result);
+            Assert.Equal("https://xxx.salesforce.com/services/data/v57.0/sobjects/Account/001XXXXXXXXXXXXXXX", result);
         }
 
         [Fact]
@@ -28,7 +27,7 @@ namespace NetCoreForce.Client.Tests
         {
             string result = UriFormatter.SObjectRowsByExternalId(_instanceUrl, _apiVersion, _sObjectName, "externalfield", "externalvalue").AbsoluteUri;
 
-            Assert.Equal("https://xxx.salesforce.com/services/data/v41.0/sobjects/Account/externalfield/externalvalue", result);
+            Assert.Equal("https://xxx.salesforce.com/services/data/v57.0/sobjects/Account/externalfield/externalvalue", result);
         }
 
         [Fact]
@@ -36,49 +35,74 @@ namespace NetCoreForce.Client.Tests
         {
             string result = UriFormatter.SObjectBlobRetrieve(_instanceUrl, _apiVersion, _sObjectName, _objectId).AbsoluteUri;
 
-            Assert.Equal("https://xxx.salesforce.com/services/data/v41.0/sobjects/Account/001XXXXXXXXXXXXXXX/body", result);
+            Assert.Equal("https://xxx.salesforce.com/services/data/v57.0/sobjects/Account/001XXXXXXXXXXXXXXX/body", result);
         }
 
         [Fact]
         public void SObjectRowsWithSingleField()
         {
             List<string> fields = new List<string>() { "AccountNumber" };
-            string result = UriFormatter.SObjectRows("https://xxx.salesforce.com", "v41.0", "Account", "001XXXXXXXXXXXXXXX", fields).AbsoluteUri;
+            string result = UriFormatter.SObjectRows("https://xxx.salesforce.com", "v57.0", "Account", "001XXXXXXXXXXXXXXX", fields).AbsoluteUri;
 
-            Assert.Equal("https://xxx.salesforce.com/services/data/v41.0/sobjects/Account/001XXXXXXXXXXXXXXX?fields=AccountNumber", result);
+            Assert.Equal("https://xxx.salesforce.com/services/data/v57.0/sobjects/Account/001XXXXXXXXXXXXXXX?fields=AccountNumber", result);
         }
 
         [Fact]
         public void SObjectRowsWithFields()
         {
             List<string> fields = new List<string>() { "AccountNumber", "BillingPostalCode" };
-            string result = UriFormatter.SObjectRows("https://xxx.salesforce.com", "v41.0", "Account", "001XXXXXXXXXXXXXXX", fields).AbsoluteUri;
+            string result = UriFormatter.SObjectRows("https://xxx.salesforce.com", "v57.0", "Account", "001XXXXXXXXXXXXXXX", fields).AbsoluteUri;
 
-            Assert.Equal("https://xxx.salesforce.com/services/data/v41.0/sobjects/Account/001XXXXXXXXXXXXXXX?fields=AccountNumber,BillingPostalCode", result);
+            Assert.Equal("https://xxx.salesforce.com/services/data/v57.0/sobjects/Account/001XXXXXXXXXXXXXXX?fields=AccountNumber,BillingPostalCode", result);
         }
 
         [Fact]
         public void SObjectsComposite()
         {
-            string result = UriFormatter.SObjectsComposite("https://xxx.salesforce.com", "v41.0").AbsoluteUri;
+            string result = UriFormatter.SObjectsComposite("https://xxx.salesforce.com", "v57.0").AbsoluteUri;
 
-            Assert.Equal("https://xxx.salesforce.com/services/data/v41.0/composite/sobjects", result);
+            Assert.Equal("https://xxx.salesforce.com/services/data/v57.0/composite/sobjects", result);
+        }
+
+        [Fact]
+        public void CompositeRequest()
+        {
+            string result = UriFormatter.CompositeRequest("https://xxx.salesforce.com", "v59.0").AbsoluteUri;
+
+            Assert.Equal("https://xxx.salesforce.com/services/data/v59.0/composite", result);
+        }
+
+        [Fact]
+        public void CompositeSubRequest()
+        {
+            string guid = Guid.NewGuid().ToString();
+            string result = UriFormatter.CompositeSubRequest("v59.0", "Account", guid);
+
+            Assert.Equal($"/services/data/v59.0/sobjects/Account/{guid}", result);
+        }
+
+        [Fact]
+        public void SObjectTree()
+        {
+            string result = UriFormatter.SObjectTree("https://xxx.salesforce.com", "v57.0", "Account").AbsoluteUri;
+
+            Assert.Equal("https://xxx.salesforce.com/services/data/v57.0/composite/tree/Account", result);
         }
 
         [Fact]
         public void SObjectBasicInformation()
         {
-            string result = UriFormatter.SObjectBasicInformation("https://xxx.salesforce.com", "v41.0", "Account").AbsoluteUri;
+            string result = UriFormatter.SObjectBasicInformation("https://xxx.salesforce.com", "v57.0", "Account").AbsoluteUri;
 
-            Assert.Equal("https://xxx.salesforce.com/services/data/v41.0/sobjects/Account", result);
+            Assert.Equal("https://xxx.salesforce.com/services/data/v57.0/sobjects/Account", result);
         }
 
         [Fact]
         public void SObjectDescribe()
         {
-            string result = UriFormatter.SObjectDescribe("https://xxx.salesforce.com", "v41.0", "Account").AbsoluteUri;
+            string result = UriFormatter.SObjectDescribe("https://xxx.salesforce.com", "v57.0", "Account").AbsoluteUri;
 
-            Assert.Equal("https://xxx.salesforce.com/services/data/v41.0/sobjects/Account/describe", result);
+            Assert.Equal("https://xxx.salesforce.com/services/data/v57.0/sobjects/Account/describe", result);
         }
 
         [Fact]
@@ -136,11 +160,11 @@ namespace NetCoreForce.Client.Tests
         {
             string result = UriFormatter.Query(
                 "https://xxx.salesforce.com",
-                "v41.0",
+                "v57.0",
                 "SELECT Id, Name FROM Account WHERE Id = '001XXXXXXXXXXXXXXX'",
                 false).AbsoluteUri;
 
-            Assert.Equal("https://xxx.salesforce.com/services/data/v41.0/query?q=SELECT%20Id,%20Name%20FROM%20Account%20WHERE%20Id%20%3D%20%27001XXXXXXXXXXXXXXX%27",
+            Assert.Equal("https://xxx.salesforce.com/services/data/v57.0/query?q=SELECT%20Id,%20Name%20FROM%20Account%20WHERE%20Id%20%3D%20%27001XXXXXXXXXXXXXXX%27",
                 result);
         }
 
@@ -149,11 +173,11 @@ namespace NetCoreForce.Client.Tests
         {
             string result = UriFormatter.Query(
                 "https://xxx.salesforce.com",
-                "v41.0",
+                "v57.0",
                 "SELECT Id, Name FROM Account WHERE Id = '001XXXXXXXXXXXXXXX'",
-                true).AbsoluteUri;            
+                true).AbsoluteUri;
 
-            Assert.Equal("https://xxx.salesforce.com/services/data/v41.0/queryAll?q=SELECT%20Id,%20Name%20FROM%20Account%20WHERE%20Id%20%3D%20%27001XXXXXXXXXXXXXXX%27",
+            Assert.Equal("https://xxx.salesforce.com/services/data/v57.0/queryAll?q=SELECT%20Id,%20Name%20FROM%20Account%20WHERE%20Id%20%3D%20%27001XXXXXXXXXXXXXXX%27",
                 result);
         }
 
@@ -161,21 +185,227 @@ namespace NetCoreForce.Client.Tests
         public void Search()
         {
             //TODO: add actual SOSL syntax
-            string result = UriFormatter.Search( _instanceUrl, _apiVersion, "X Y").AbsoluteUri;
+            string result = UriFormatter.Search(_instanceUrl, _apiVersion, "X Y").AbsoluteUri;
 
-            Assert.Equal("https://xxx.salesforce.com/services/data/v41.0/search?q=X%20Y", result);
+            Assert.Equal("https://xxx.salesforce.com/services/data/v57.0/search?q=X%20Y", result);
         }
 
         [Fact]
         public void Batch()
         {
             //TODO: add actual SOSL syntax
-            string result = UriFormatter.Batch( _instanceUrl, _apiVersion).AbsoluteUri;
+            string result = UriFormatter.Batch(_instanceUrl, _apiVersion).AbsoluteUri;
 
-            Assert.Equal("https://xxx.salesforce.com/services/data/v41.0/composite/batch", result);
+            Assert.Equal("https://xxx.salesforce.com/services/data/v57.0/composite/batch", result);
+        }
+
+        // Injection prevention - values must not be able to change the structure of the URL,
+        // e.g. an ID of "../Contact/003XXXXXXXXXXXXXXX" would otherwise resolve to a different object
+
+        [Theory]
+        [InlineData("../Contact/003XXXXXXXXXXXXXXX")]
+        [InlineData("..\\Contact\\003XXXXXXXXXXXXXXX")]
+        [InlineData("..")]
+        [InlineData(".")]
+        [InlineData("001XXXXXXXXXXXXXXX?fields=Name")]
+        [InlineData("001XXXXXXXXXXXXXXX#fragment")]
+        [InlineData("%2e%2e")]
+        public void InvalidObjectIdThrows(string objectId)
+        {
+            Assert.Throws<ArgumentException>(() => UriFormatter.SObjectRows(_instanceUrl, _apiVersion, _sObjectName, objectId));
+            Assert.Throws<ArgumentException>(() => UriFormatter.SObjectBlobRetrieve(_instanceUrl, _apiVersion, _sObjectName, objectId));
+            Assert.Throws<ArgumentException>(() => UriFormatter.CompositeSubRequest(_apiVersion, _sObjectName, objectId));
+        }
+
+        [Theory]
+        [InlineData("Account/../User")]
+        [InlineData("../Account")]
+        [InlineData("Account?x=1")]
+        [InlineData("Account#fragment")]
+        [InlineData("Account Name")]
+        [InlineData("Acc.ount")]
+        [InlineData("1Account")]
+        public void InvalidApiNameThrows(string apiName)
+        {
+            Assert.Throws<ArgumentException>(() => UriFormatter.SObjectRows(_instanceUrl, _apiVersion, apiName, _objectId));
+            Assert.Throws<ArgumentException>(() => UriFormatter.SObjectBasicInformation(_instanceUrl, _apiVersion, apiName));
+            Assert.Throws<ArgumentException>(() => UriFormatter.SObjectDescribe(_instanceUrl, _apiVersion, apiName));
+            Assert.Throws<ArgumentException>(() => UriFormatter.SObjectTree(_instanceUrl, _apiVersion, apiName));
+            Assert.Throws<ArgumentException>(() => UriFormatter.CompositeSubRequest(_apiVersion, apiName, _objectId));
+            Assert.Throws<ArgumentException>(() => UriFormatter.SObjectRowsByExternalId(_instanceUrl, _apiVersion, _sObjectName, apiName, "externalvalue"));
+            Assert.Throws<ArgumentException>(() => UriFormatter.SObjectBlobRetrieve(_instanceUrl, _apiVersion, _sObjectName, _objectId, apiName));
+        }
+
+        [Theory]
+        [InlineData("Custom_Object__c")]
+        [InlineData("ns__Custom_Object__c")]
+        [InlineData("Custom_Event__e")]
+        [InlineData("Custom_Metadata__mdt")]
+        public void ValidApiName(string apiName)
+        {
+            string result = UriFormatter.SObjectRows(_instanceUrl, _apiVersion, apiName, _objectId).AbsoluteUri;
+
+            Assert.Equal($"https://xxx.salesforce.com/services/data/v57.0/sobjects/{apiName}/001XXXXXXXXXXXXXXX", result);
+        }
+
+        [Fact]
+        public void SObjectRowsByExternalIdEncodesValue()
+        {
+            string result = UriFormatter.SObjectRowsByExternalId(_instanceUrl, _apiVersion, _sObjectName, "externalfield", "A/B#C?D E%F").AbsoluteUri;
+
+            Assert.Equal("https://xxx.salesforce.com/services/data/v57.0/sobjects/Account/externalfield/A%2FB%23C%3FD%20E%25F", result);
+        }
+
+        [Fact]
+        public void SObjectRowsByExternalIdEncodesTraversal()
+        {
+            string result = UriFormatter.SObjectRowsByExternalId(_instanceUrl, _apiVersion, _sObjectName, "externalfield", "../../query").AbsoluteUri;
+
+            Assert.Equal("https://xxx.salesforce.com/services/data/v57.0/sobjects/Account/externalfield/..%2F..%2Fquery", result);
+        }
+
+        [Theory]
+        [InlineData("..")]
+        [InlineData(".")]
+        public void SObjectRowsByExternalIdRelativeValueThrows(string fieldValue)
+        {
+            Assert.Throws<ArgumentException>(() => UriFormatter.SObjectRowsByExternalId(_instanceUrl, _apiVersion, _sObjectName, "externalfield", fieldValue));
+        }
+
+        [Fact]
+        public void SObjectRowsByExternalIdNullValueThrows()
+        {
+            Assert.Throws<ArgumentNullException>(() => UriFormatter.SObjectRowsByExternalId(_instanceUrl, _apiVersion, _sObjectName, "externalfield", null));
+        }
+
+        [Fact]
+        public void CompositeSubRequestReference()
+        {
+            string result = UriFormatter.CompositeSubRequest("v59.0", "Account", "@{newAccount.id}");
+
+            Assert.Equal("/services/data/v59.0/sobjects/Account/@{newAccount.id}", result);
+        }
+
+        [Fact]
+        public void ApexUri()
+        {
+            string result = UriFormatter.ApexUri(_instanceUrl, "MyService/v1/items?status=active").AbsoluteUri;
+
+            Assert.Equal("https://xxx.salesforce.com/services/apexrest/MyService/v1/items?status=active", result);
+        }
+
+        [Theory]
+        [InlineData("../data/v57.0/query")]
+        [InlineData("MyService/../../data/v57.0/query")]
+        [InlineData("MyService\\..\\..\\data")]
+        [InlineData("%2e%2e/data/v57.0/query")]
+        [InlineData("%2e%2e%2fdata%2fv57.0%2fquery")]
+        [InlineData("%252e%252e/%252e%252e/data")]
+        [InlineData("MyService%5c..%5cdata")]
+        public void ApexUriRelativePathThrows(string apexResourceUrl)
+        {
+            Assert.Throws<ArgumentException>(() => UriFormatter.ApexUri(_instanceUrl, apexResourceUrl));
+        }
+
+        [Fact]
+        public void ApexUriAllowsEncodedQueryValues()
+        {
+            // encoded characters are only rejected in the path - query values may legitimately contain them
+            string result = UriFormatter.ApexUri(_instanceUrl, "MyService/items?path=a%2Fb%25").AbsoluteUri;
+
+            Assert.Equal("https://xxx.salesforce.com/services/apexrest/MyService/items?path=a%2Fb%25", result);
+        }
+
+        [Fact]
+        public void ApiNameWithTrailingNewlineThrows()
+        {
+            // in .NET regex, $ also matches before a trailing newline
+            Assert.Throws<ArgumentException>(() => UriFormatter.SObjectDescribe(_instanceUrl, _apiVersion, "Account\n"));
+        }
+
+        [Theory]
+        [InlineData("https://evil.example/steal")]
+        [InlineData("//evil.example/steal")]
+        [InlineData("v57.0/../../evil")]
+        [InlineData("v57.0#")]
+        [InlineData("v57.0?")]
+        [InlineData("57.0")]
+        [InlineData("v57.0\n")]
+        public void InvalidApiVersionThrows(string apiVersion)
+        {
+            // an unvalidated API version can redirect the request, and the access token, to another host or resource
+            Assert.Throws<ArgumentException>(() => UriFormatter.DescribeGlobal(_instanceUrl, apiVersion));
+            Assert.Throws<ArgumentException>(() => UriFormatter.Limits(_instanceUrl, apiVersion));
+            Assert.Throws<ArgumentException>(() => UriFormatter.LimitsResource(apiVersion));
+            Assert.Throws<ArgumentException>(() => UriFormatter.SObjectRows(_instanceUrl, apiVersion, _sObjectName, _objectId));
+            Assert.Throws<ArgumentException>(() => UriFormatter.Query(_instanceUrl, apiVersion, "SELECT Id FROM Account"));
+            Assert.Throws<ArgumentException>(() => UriFormatter.Search(_instanceUrl, apiVersion, "FIND {test}"));
+            Assert.Throws<ArgumentException>(() => UriFormatter.CompositeSubRequest(apiVersion, _sObjectName, _objectId));
+            Assert.Throws<ArgumentException>(() => UriFormatter.CompositeRequest(_instanceUrl, apiVersion));
+        }
+
+        [Theory]
+        [InlineData("v57.0")]
+        [InlineData("v67.0")]
+        [InlineData("v100.0")]
+        public void ValidApiVersion(string apiVersion)
+        {
+            string result = UriFormatter.DescribeGlobal(_instanceUrl, apiVersion).AbsoluteUri;
+
+            Assert.Equal($"https://xxx.salesforce.com/services/data/{apiVersion}/sobjects", result);
+        }
+
+        [Theory]
+        [InlineData("http://xxx.salesforce.com")]
+        [InlineData("ftp://xxx.salesforce.com")]
+        public void NonHttpsInstanceUrlThrows(string instanceUrl)
+        {
+            // the access token must not be sent in cleartext
+            Assert.Throws<ArgumentException>(() => UriFormatter.BaseUri(instanceUrl));
+            Assert.Throws<ArgumentException>(() => UriFormatter.DescribeGlobal(instanceUrl, _apiVersion));
+            Assert.Throws<ArgumentException>(() => UriFormatter.ApexUri(instanceUrl, "MyService"));
+        }
+
+        [Theory]
+        [InlineData("not a url")]
+        [InlineData("/services/data")]
+        public void MalformedInstanceUrlThrows(string instanceUrl)
+        {
+            Assert.Throws<FormatException>(() => UriFormatter.BaseUri(instanceUrl));
+        }
+
+        [Fact]
+        public void NextRecordsUri()
+        {
+            Uri result = UriFormatter.NextRecordsUri(_instanceUrl, "/services/data/v57.0/query/01gXXXXXXXXXXXXXXX-2000");
+
+            Assert.Equal("https://xxx.salesforce.com/services/data/v57.0/query/01gXXXXXXXXXXXXXXX-2000", result.AbsoluteUri);
+        }
+
+        [Theory]
+        [InlineData("https://evil.example/services/data/v57.0/query/01gXXXXXXXXXXXXXXX-2000")]
+        [InlineData("//evil.example/services/data/v57.0/query/01gXXXXXXXXXXXXXXX-2000")]
+        [InlineData("/services/apexrest/Something")]
+        [InlineData("/services/data/../apexrest/Something")]
+        [InlineData("services/data/v57.0/query/01gXXXXXXXXXXXXXXX-2000")]
+        public void NextRecordsUriOffInstanceThrows(string nextRecordsUrl)
+        {
+            // nextRecordsUrl comes from the response - the access token must not follow it to another host or resource
+            Assert.Throws<ForceApiException>(() => UriFormatter.NextRecordsUri(_instanceUrl, nextRecordsUrl));
         }
 
         //TODO: Auth URLs
+
+#pragma warning disable CS0618 // obsolete - still tested until removed
+        [Fact]
+        public void OAuthAuthenticationUrl()
+        {
+            string result = UriFormatter.OAuthAuthenticationUrl("https://login.salesforce.com/services/oauth2/authorize", "CLIENTID", "CLIENTSECRET", "https://www.theredirectpage.com/callback").AbsoluteUri.ToString();
+
+            // the client secret must not be exposed in a browser URL
+            Assert.Equal("https://login.salesforce.com/services/oauth2/authorize?client_id=CLIENTID&redirect_uri=https%3A%2F%2Fwww.theredirectpage.com%2Fcallback&response_type=code", result);
+        }
+#pragma warning restore CS0618
 
         [Fact]
         public void WebServerAuthenticationUrl()
@@ -195,5 +425,19 @@ namespace NetCoreForce.Client.Tests
 
             //TODO: test with url-encoded state parameter
         }
+
+#pragma warning disable CS0618 // obsolete - still tested until removed
+        [Fact]
+        public void IntrospectTokenUrl()
+        {
+            string result = UriFormatter.IntrospectTokenUrl("https://login.salesforce.com/services/oauth2/introspect", "MYTOKEN", "CLIENTID").AbsoluteUri.ToString();
+
+            Assert.Equal("https://login.salesforce.com/services/oauth2/introspect?token=MYTOKEN&client_id=CLIENTID&format=json", result);
+
+            result = UriFormatter.IntrospectTokenUrl("https://login.salesforce.com/services/oauth2/introspect", "MYTOKEN", "CLIENTID", "CLIENTSECRET").AbsoluteUri.ToString();
+
+            Assert.Equal("https://login.salesforce.com/services/oauth2/introspect?token=MYTOKEN&client_id=CLIENTID&client_secret=CLIENTSECRET&format=json", result);
+        }
+#pragma warning restore CS0618
     }
 }

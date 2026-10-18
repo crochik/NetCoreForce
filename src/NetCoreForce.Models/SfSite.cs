@@ -1,4 +1,4 @@
-// SF API version v50.0
+// SF API version v67.0
 // Custom fields included: False
 // Relationship objects included: True
 
@@ -119,14 +119,24 @@ namespace NetCoreForce.Models
 		public bool? OptionsEnableFeeds { get; set; }
 
 		///<summary>
-		/// Require Secure Connections (HTTPS)
-		/// <para>Name: OptionsRequireHttps</para>
+		/// isSiteGAIntegrationMigrated
+		/// <para>Name: OptionsIsSiteGAIntegrationMigrated</para>
 		/// <para>SF Type: boolean</para>
 		/// <para>Nillable: False</para>
 		///</summary>
-		[JsonProperty(PropertyName = "optionsRequireHttps")]
+		[JsonProperty(PropertyName = "optionsIsSiteGAIntegrationMigrated")]
 		[Updateable(false), Createable(false)]
-		public bool? OptionsRequireHttps { get; set; }
+		public bool? OptionsIsSiteGAIntegrationMigrated { get; set; }
+
+		///<summary>
+		/// Redirect to custom domain
+		/// <para>Name: OptionsRedirectToCustomDomain</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "optionsRedirectToCustomDomain")]
+		[Updateable(false), Createable(false)]
+		public bool? OptionsRedirectToCustomDomain { get; set; }
 
 		///<summary>
 		/// Guest Access to the Payments API
@@ -147,6 +157,46 @@ namespace NetCoreForce.Models
 		[JsonProperty(PropertyName = "optionsHasStoredPathPrefix")]
 		[Updateable(false), Createable(false)]
 		public bool? OptionsHasStoredPathPrefix { get; set; }
+
+		///<summary>
+		/// Enforce Cookie Consent
+		/// <para>Name: OptionsCookieConsent</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "optionsCookieConsent")]
+		[Updateable(false), Createable(false)]
+		public bool? OptionsCookieConsent { get; set; }
+
+		///<summary>
+		/// Cache public Visualforce pages
+		/// <para>Name: OptionsCachePublicVfPagesInProxies</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "optionsCachePublicVfPagesInProxies")]
+		[Updateable(false), Createable(false)]
+		public bool? OptionsCachePublicVfPagesInProxies { get; set; }
+
+		///<summary>
+		/// IsSiteDataCloudIntegrationEnabled
+		/// <para>Name: OptionsIsSiteDataCloudIntegrationEnabled</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "optionsIsSiteDataCloudIntegrationEnabled")]
+		[Updateable(false), Createable(false)]
+		public bool? OptionsIsSiteDataCloudIntegrationEnabled { get; set; }
+
+		///<summary>
+		/// IsSiteGAIntegrationEnabled
+		/// <para>Name: OptionsIsSiteGAIntegrationEnabled</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "optionsIsSiteGAIntegrationEnabled")]
+		[Updateable(false), Createable(false)]
+		public bool? OptionsIsSiteGAIntegrationEnabled { get; set; }
 
 		///<summary>
 		/// Enable Standard Home Page
@@ -219,16 +269,6 @@ namespace NetCoreForce.Models
 		public bool? OptionsAllowStandardPortalPages { get; set; }
 
 		///<summary>
-		/// Upgrade all requests to HTTPS
-		/// <para>Name: OptionsCspUpgradeInsecureRequests</para>
-		/// <para>SF Type: boolean</para>
-		/// <para>Nillable: False</para>
-		///</summary>
-		[JsonProperty(PropertyName = "optionsCspUpgradeInsecureRequests")]
-		[Updateable(false), Createable(false)]
-		public bool? OptionsCspUpgradeInsecureRequests { get; set; }
-
-		///<summary>
 		/// Enable Content Sniffing Protection
 		/// <para>Name: OptionsContentSniffingProtection</para>
 		/// <para>SF Type: boolean</para>
@@ -257,6 +297,96 @@ namespace NetCoreForce.Models
 		[JsonProperty(PropertyName = "optionsReferrerPolicyOriginWhenCrossOrigin")]
 		[Updateable(false), Createable(false)]
 		public bool? OptionsReferrerPolicyOriginWhenCrossOrigin { get; set; }
+
+		///<summary>
+		/// Use the guest user’s language for unauthenticated users
+		/// <para>Name: OptionsUseGuestUserLanguage</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "optionsUseGuestUserLanguage")]
+		[Updateable(false), Createable(false)]
+		public bool? OptionsUseGuestUserLanguage { get; set; }
+
+		///<summary>
+		/// IsSiteGRecaptchaIntegrationEnabled
+		/// <para>Name: OptionsIsSiteGRecaptchaIntegrationEnabled</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "optionsIsSiteGRecaptchaIntegrationEnabled")]
+		[Updateable(false), Createable(false)]
+		public bool? OptionsIsSiteGRecaptchaIntegrationEnabled { get; set; }
+
+		///<summary>
+		/// IsSiteConsentBannerIntegrationEnabled
+		/// <para>Name: OptionsIsSiteConsentBannerIntegrationEnabled</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "optionsIsSiteConsentBannerIntegrationEnabled")]
+		[Updateable(false), Createable(false)]
+		public bool? OptionsIsSiteConsentBannerIntegrationEnabled { get; set; }
+
+		///<summary>
+		/// isSiteGAIntegrationMigratedV2
+		/// <para>Name: OptionsIsSiteGAIntegrationMigratedV2</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "optionsIsSiteGAIntegrationMigratedV2")]
+		[Updateable(false), Createable(false)]
+		public bool? OptionsIsSiteGAIntegrationMigratedV2 { get; set; }
+
+		///<summary>
+		/// isSiteDataCloudIntegrationMigrated
+		/// <para>Name: OptionsIsSiteDataCloudIntegrationMigrated</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "optionsIsSiteDataCloudIntegrationMigrated")]
+		[Updateable(false), Createable(false)]
+		public bool? OptionsIsSiteDataCloudIntegrationMigrated { get; set; }
+
+		///<summary>
+		/// isSiteConsentBannerIntegrationMigrated
+		/// <para>Name: OptionsIsSiteConsentBannerIntegrationMigrated</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "optionsIsSiteConsentBannerIntegrationMigrated")]
+		[Updateable(false), Createable(false)]
+		public bool? OptionsIsSiteConsentBannerIntegrationMigrated { get; set; }
+
+		///<summary>
+		/// isSlashSRemovedSite
+		/// <para>Name: OptionsIsSlashSRemovedSite</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "optionsIsSlashSRemovedSite")]
+		[Updateable(false), Createable(false)]
+		public bool? OptionsIsSlashSRemovedSite { get; set; }
+
+		///<summary>
+		/// Allow Invitation APIs for Guest Users
+		/// <para>Name: OptionsAllowInvitationsAPI</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "optionsAllowInvitationsAPI")]
+		[Updateable(false), Createable(false)]
+		public bool? OptionsAllowInvitationsAPI { get; set; }
+
+		///<summary>
+		/// RtlEnabled
+		/// <para>Name: OptionsRtlEnabled</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "optionsRtlEnabled")]
+		[Updateable(false), Createable(false)]
+		public bool? OptionsRtlEnabled { get; set; }
 
 		///<summary>
 		/// Site Description

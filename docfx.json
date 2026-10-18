@@ -1,0 +1,69 @@
+{
+  "$schema": "https://raw.githubusercontent.com/dotnet/docfx/main/schemas/docfx.schema.json",
+  "metadata": [
+    {
+      "src": [
+        {
+          "src": "src",
+          "files": [
+            "NetCoreForce.Client/*.csproj"
+          ]
+        }
+      ],
+      "properties": {
+        "TargetFramework": "netstandard2.0"
+      },
+      "dest": "docs/api"
+    }
+  ],
+  "build": {
+    "content": [
+      {
+        "src": "docs",
+        "files": [
+          "**/*.{md,yml}"
+        ],
+        "exclude": [
+          "_site/**"
+        ]
+      }
+    ],
+    "resource": [
+      {
+        "src": "docs",
+        "files": [
+          "images/**",
+          "robots.txt"
+        ]
+      },
+      {
+        "src": ".",
+        "files": [
+          "netcoreforce_logo_128px.png"
+        ],
+        "dest": "images"
+      }
+    ],
+    "output": "docs/_site",
+    "template": [
+      "default",
+      "modern",
+      "docs/template"
+    ],
+    "globalMetadata": {
+      "_appName": "NetCoreForce",
+      "_appTitle": "NetCoreForce",
+      "_appLogoPath": "images/netcoreforce_logo_128px.png",
+      "_appFaviconPath": "images/netcoreforce_logo_128px.png",
+      "_description": "NetCoreForce is a Salesforce REST API client library for .NET and C#: OAuth login, SOQL queries, CRUD, composite requests, and generated object models.",
+      "_lang": "en",
+      "_enableSearch": true,
+      "pdf": false
+    },
+    "sitemap": {
+      "baseUrl": "https://netcoreforce.com/",
+      "changefreq": "weekly",
+      "priority": 0.5
+    }
+  }
+}

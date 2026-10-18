@@ -1,4 +1,4 @@
-// SF API version v50.0
+// SF API version v67.0
 // Custom fields included: False
 // Relationship objects included: True
 
@@ -10,7 +10,7 @@ using Newtonsoft.Json;
 namespace NetCoreForce.Models
 {
 	///<summary>
-	/// OAuth Custom Scope
+	/// Oauth Custom Scope
 	///<para>SObject Name: OauthCustomScope</para>
 	///<para>Custom Object: False</para>
 	///</summary>
@@ -23,7 +23,7 @@ namespace NetCoreForce.Models
 		}
 
 		///<summary>
-		/// OAuth Custom Scope ID
+		/// Oauth Custom Scope ID
 		/// <para>Name: Id</para>
 		/// <para>SF Type: id</para>
 		/// <para>Nillable: False</para>
@@ -68,6 +68,16 @@ namespace NetCoreForce.Models
 		///</summary>
 		[JsonProperty(PropertyName = "masterLabel")]
 		public string MasterLabel { get; set; }
+
+		///<summary>
+		/// Namespace Prefix
+		/// <para>Name: NamespacePrefix</para>
+		/// <para>SF Type: string</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "namespacePrefix")]
+		[Updateable(false), Createable(false)]
+		public string NamespacePrefix { get; set; }
 
 		///<summary>
 		/// Created Date

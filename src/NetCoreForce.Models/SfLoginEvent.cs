@@ -1,4 +1,4 @@
-// SF API version v50.0
+// SF API version v67.0
 // Custom fields included: False
 // Relationship objects included: True
 
@@ -259,6 +259,16 @@ namespace NetCoreForce.Models
 		public string CountryIso { get; set; }
 
 		///<summary>
+		/// Forwarded For IP
+		/// <para>Name: ForwardedForIp</para>
+		/// <para>SF Type: string</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "forwardedForIp")]
+		[Updateable(false), Createable(false)]
+		public string ForwardedForIp { get; set; }
+
+		///<summary>
 		/// Latitude
 		/// <para>Name: LoginLatitude</para>
 		/// <para>SF Type: double</para>
@@ -299,7 +309,7 @@ namespace NetCoreForce.Models
 		public string City { get; set; }
 
 		///<summary>
-		/// PostalCode
+		/// Postal Code
 		/// <para>Name: PostalCode</para>
 		/// <para>SF Type: string</para>
 		/// <para>Nillable: True</para>
@@ -417,6 +427,72 @@ namespace NetCoreForce.Models
 		[JsonProperty(PropertyName = "userType")]
 		[Updateable(false), Createable(false)]
 		public string UserType { get; set; }
+
+		///<summary>
+		/// Profile ID
+		/// <para>Name: ProfileId</para>
+		/// <para>SF Type: reference</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "profileId")]
+		[Updateable(false), Createable(false)]
+		public string ProfileId { get; set; }
+
+		///<summary>
+		/// ReferenceTo: Profile
+		/// <para>RelationshipName: Profile</para>
+		///</summary>
+		[JsonProperty(PropertyName = "profile")]
+		[Updateable(false), Createable(false)]
+		public SfProfile Profile { get; set; }
+
+		///<summary>
+		/// Role ID
+		/// <para>Name: RoleId</para>
+		/// <para>SF Type: reference</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "roleId")]
+		[Updateable(false), Createable(false)]
+		public string RoleId { get; set; }
+
+		///<summary>
+		/// ReferenceTo: UserRole
+		/// <para>RelationshipName: Role</para>
+		///</summary>
+		[JsonProperty(PropertyName = "role")]
+		[Updateable(false), Createable(false)]
+		public SfUserRole Role { get; set; }
+
+		///<summary>
+		/// Authentication Method Reference
+		/// <para>Name: AuthMethodReference</para>
+		/// <para>SF Type: string</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "authMethodReference")]
+		[Updateable(false), Createable(false)]
+		public string AuthMethodReference { get; set; }
+
+		///<summary>
+		/// Login Subtype
+		/// <para>Name: LoginSubType</para>
+		/// <para>SF Type: picklist</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "loginSubType")]
+		[Updateable(false), Createable(false)]
+		public string LoginSubType { get; set; }
+
+		///<summary>
+		/// Authentication Context Class Reference
+		/// <para>Name: AuthContextClassRef</para>
+		/// <para>SF Type: string</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "authContextClassRef")]
+		[Updateable(false), Createable(false)]
+		public string AuthContextClassRef { get; set; }
 
 	}
 }

@@ -1,4 +1,4 @@
-// SF API version v50.0
+// SF API version v67.0
 // Custom fields included: False
 // Relationship objects included: True
 
@@ -159,6 +159,26 @@ namespace NetCoreForce.Models
 		public bool? OptionsFullContentPushNotifications { get; set; }
 
 		///<summary>
+		/// CodeCredentialGuestEnabled
+		/// <para>Name: OptionsCodeCredentialGuestEnabled</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "optionsCodeCredentialGuestEnabled")]
+		[Updateable(false), Createable(false)]
+		public bool? OptionsCodeCredentialGuestEnabled { get; set; }
+
+		///<summary>
+		/// TokenExchangeManageBitEnabled
+		/// <para>Name: OptionsTokenExchangeManageBitEnabled</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "optionsTokenExchangeManageBitEnabled")]
+		[Updateable(false), Createable(false)]
+		public bool? OptionsTokenExchangeManageBitEnabled { get; set; }
+
+		///<summary>
 		/// Lock App After
 		/// <para>Name: MobileSessionTimeout</para>
 		/// <para>SF Type: picklist</para>
@@ -207,6 +227,26 @@ namespace NetCoreForce.Models
 		[JsonProperty(PropertyName = "refreshTokenValidityPeriod")]
 		[Updateable(false), Createable(false)]
 		public int? RefreshTokenValidityPeriod { get; set; }
+
+		///<summary>
+		/// Uvid Timeout
+		/// <para>Name: UvidTimeout</para>
+		/// <para>SF Type: picklist</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "uvidTimeout")]
+		[Updateable(false), Createable(false)]
+		public string UvidTimeout { get; set; }
+
+		///<summary>
+		/// Named User Uvid Timeout
+		/// <para>Name: NamedUserUvidTimeout</para>
+		/// <para>SF Type: picklist</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "namedUserUvidTimeout")]
+		[Updateable(false), Createable(false)]
+		public string NamedUserUvidTimeout { get; set; }
 
 	}
 }

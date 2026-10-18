@@ -1,4 +1,4 @@
-// SF API version v50.0
+// SF API version v67.0
 // Custom fields included: False
 // Relationship objects included: True
 
@@ -179,6 +179,58 @@ namespace NetCoreForce.Models
 		[JsonProperty(PropertyName = "engagementChannelType")]
 		[Updateable(false), Createable(false)]
 		public SfEngagementChannelType EngagementChannelType { get; set; }
+
+		///<summary>
+		/// Communication Subscription ID
+		/// <para>Name: DataUsePurposeId</para>
+		/// <para>SF Type: reference</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "dataUsePurposeId")]
+		[Updateable(false), Createable(false)]
+		public string DataUsePurposeId { get; set; }
+
+		///<summary>
+		/// ReferenceTo: CommSubscription
+		/// <para>RelationshipName: DataUsePurpose</para>
+		///</summary>
+		[JsonProperty(PropertyName = "dataUsePurpose")]
+		[Updateable(false), Createable(false)]
+		public SfCommSubscription DataUsePurpose { get; set; }
+
+		///<summary>
+		/// Messaging Channel ID
+		/// <para>Name: MessagingChannelId</para>
+		/// <para>SF Type: reference</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "messagingChannelId")]
+		public string MessagingChannelId { get; set; }
+
+		///<summary>
+		/// ReferenceTo: MessagingChannel
+		/// <para>RelationshipName: MessagingChannel</para>
+		///</summary>
+		[JsonProperty(PropertyName = "messagingChannel")]
+		[Updateable(false), Createable(false)]
+		public SfMessagingChannel MessagingChannel { get; set; }
+
+		///<summary>
+		/// Messaging Channel Usage ID
+		/// <para>Name: MessagingChannelUsageId</para>
+		/// <para>SF Type: reference</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "messagingChannelUsageId")]
+		public string MessagingChannelUsageId { get; set; }
+
+		///<summary>
+		/// ReferenceTo: MessagingChannelUsage
+		/// <para>RelationshipName: MessagingChannelUsage</para>
+		///</summary>
+		[JsonProperty(PropertyName = "messagingChannelUsage")]
+		[Updateable(false), Createable(false)]
+		public SfMessagingChannelUsage MessagingChannelUsage { get; set; }
 
 	}
 }

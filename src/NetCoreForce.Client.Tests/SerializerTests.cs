@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using NetCoreForce.Client;
 using NetCoreForce.Client.Attributes;
 using Newtonsoft.Json;
@@ -108,6 +109,49 @@ namespace NetCoreForce.Client.Tests
             Assert.DoesNotContain("nullProperty", serialized);
         }
 
-        //TODO: test deserialize
+        [Fact]
+        public void NullValueHandling_WithFieldsToNull_ForUpdate()
+        {
+            List<string> fieldsToNull = new List<string>(){ "nullProperty"};
+            string serialized = JsonSerializer.SerializeForUpdate(new SampleObject(), fieldsToNull);
+
+            Assert.Contains("nullProperty", serialized);
+        }
+
+        [Fact]
+        public void NullValueHandling_WithIgnoreNulls_ForUpdate()
+        {
+            string serialized = JsonSerializer.SerializeForUpdate(new SampleObject(), ignoreNulls: false);
+
+            Assert.Contains("nullProperty", serialized);
+        }
+
+        [Fact]
+        public void NullValueHandling_WithFieldsToNull_MixedCase_ForUpdate()
+        {
+            List<string> fieldsToNull = new List<string>(){ "NullProPertY"};
+            string serialized = JsonSerializer.SerializeForUpdate(new SampleObject(), fieldsToNull);
+
+            Assert.Contains("nullProperty", serialized);
+        }
+
+        [Fact]
+        public void Deserialize_RoundTripsProperties()
+        {
+            string json = "{\"noAttributes\":\"deserialized value\",\"createableTrue\":\"another value\"}";
+
+            SampleObject obj = JsonSerializer.Deserialize<SampleObject>(json);
+
+            Assert.Equal("deserialized value", obj.NoAttributes);
+            Assert.Equal("another value", obj.CreateableTrue);
+        }
+
+        [Fact]
+        public void Deserialize_NullJson_ReturnsDefault()
+        {
+            SampleObject obj = JsonSerializer.Deserialize<SampleObject>("null");
+
+            Assert.Null(obj);
+        }
     }
 }

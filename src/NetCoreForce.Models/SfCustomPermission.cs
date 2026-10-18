@@ -1,4 +1,4 @@
-// SF API version v50.0
+// SF API version v67.0
 // Custom fields included: False
 // Relationship objects included: True
 
@@ -167,6 +167,24 @@ namespace NetCoreForce.Models
 		[JsonProperty(PropertyName = "description")]
 		[Updateable(false), Createable(false)]
 		public string Description { get; set; }
+
+		///<summary>
+		/// External Client Application ID
+		/// <para>Name: ExternalClientApplicationId</para>
+		/// <para>SF Type: reference</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "externalClientApplicationId")]
+		[Updateable(false), Createable(false)]
+		public string ExternalClientApplicationId { get; set; }
+
+		///<summary>
+		/// ReferenceTo: ExternalClientApplication
+		/// <para>RelationshipName: ExternalClientApplication</para>
+		///</summary>
+		[JsonProperty(PropertyName = "externalClientApplication")]
+		[Updateable(false), Createable(false)]
+		public SfExternalClientApplication ExternalClientApplication { get; set; }
 
 		///<summary>
 		/// License Required

@@ -1,4 +1,4 @@
-// SF API version v50.0
+// SF API version v67.0
 // Custom fields included: False
 // Relationship objects included: True
 
@@ -23,7 +23,7 @@ namespace NetCoreForce.Models
 		}
 
 		///<summary>
-		/// PermissionSetGroup ID
+		/// Permission Set Group ID
 		/// <para>Name: Id</para>
 		/// <para>SF Type: id</para>
 		/// <para>Nillable: False</para>
@@ -163,6 +163,15 @@ namespace NetCoreForce.Models
 		[JsonProperty(PropertyName = "status")]
 		[Updateable(false), Createable(false)]
 		public string Status { get; set; }
+
+		///<summary>
+		/// Session Activation Required
+		/// <para>Name: HasActivationRequired</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "hasActivationRequired")]
+		public bool? HasActivationRequired { get; set; }
 
 	}
 }

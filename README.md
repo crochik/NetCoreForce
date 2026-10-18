@@ -1,18 +1,78 @@
 # NetCoreForce 
 
-## A .NET Standard and .NET Core Salesforce REST API toolkit and API wrapper
+## A Salesforce REST API client library for .NET and C#
 *This project is not offered, sponsored, or endorsed by Salesforce.*
+
+NetCoreForce lets .NET applications query, create, update and delete Salesforce records through the Salesforce REST API, with OAuth 2.0 login, SOQL and SOSL queries, composite requests, and strongly typed models for Salesforce objects.
+
+[![NuGet Version](https://img.shields.io/nuget/v/NetCoreForce.Client)](https://www.nuget.org/packages/NetCoreForce.Client/) [![NuGet Downloads](https://img.shields.io/nuget/dt/NetCoreForce.Client)](https://www.nuget.org/packages/NetCoreForce.Client/)
+
+[Documentation](https://netcoreforce.com/)  
+
+## Install
+
+```
+dotnet add package NetCoreForce.Client
+dotnet add package NetCoreForce.Models
+```
+
+## Quick Start
+
+```csharp
+// Log in with the OAuth Client Credentials flow
+ForceClient client = await ForceClient.FromClientCredentialsAsync(
+    "your-client-id", "your-client-secret", "https://your-domain.my.salesforce.com/services/oauth2/token");
+
+// Query records
+List<SfAccount> accounts = await client.Query<SfAccount>("SELECT Id, Name FROM Account LIMIT 10");
+```
+
+See the [Authentication](https://netcoreforce.com/auth.html) and [Examples](https://netcoreforce.com/examples.html) docs for other login flows and more usage examples.
+
+## Changes in v6
+
+- **Breaking:** removed .NET Core 3.1 and .NET 5.0 - 7.0 targets. These may still work via .NET Standard 2.0, but are no longer tested. The ModelGenerator tool now requires .NET 8.0+.
+- **Breaking:** record IDs and object/field names are validated to prevent URL path injection. Invalid values throw an `ArgumentException`.
+- Added .NET 10.0 and .NET Framework 4.8.1 targets
+- Added Client Credentials login flow, via `ForceClient.FromClientCredentialsAsync` and in the ModelGenerator
+- Added `SoqlHelpers` for escaping untrusted values in SOQL and SOSL queries
+- External ID values are now URL-encoded in upserts
+- Default Salesforce API version is now v67.0
+- Fixed `TokenRefreshAsync` discarding the new refresh token when refresh token rotation is enabled
+- Fixed timezone offset formatting under .NET Framework 4.x
 
 ### [CHANGELOG](CHANGELOG.md)  
 
+## Library Targets
+
+The primary target is .NET Standard 2.0 to provide the widest possible support. 
+- .NET Standard 2.0 for widest possible support including .NET Framework 4.6.2+
+- .NET Standard 2.1 for newer .NET Core versions
+
+For more info on .NET Standard compatibility [see the Microsoft documentation here](https://learn.microsoft.com/en-us/dotnet/standard/net-standard?tabs=net-standard-2-0)
+
+Full target list
+- .NET Standard 2.0
+- .NET Standard 2.1
+- .NET 8.0
+- .NET 9.0
+- .NET 10.0
+- .NET Framework 4.6.2
+- .NET Framework 4.7.2
+- .NET Framework 4.8 & 4.8.1
+
+All possible frameworks are specifically targeted so that conditional compilation can be done where required.
+
+Full tested support is for .NET Core 8.0 - 10.0 as tooling and tests target those.  
+
+
+
 CI main:  
-[![](https://github.com/anthonyreilly/NetCoreForce/workflows/CI/badge.svg?branch=main)](https://github.com/anthonyreilly/NetCoreForce/actions?query=workflow%3ACI+branch%3Amain)  
+[![CI](https://github.com/anthonyreilly/NetCoreForce/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/anthonyreilly/NetCoreForce/actions/workflows/ci.yml)  
 CI dev:  
-[![](https://github.com/anthonyreilly/NetCoreForce/workflows/CI/badge.svg?branch=dev)](https://github.com/anthonyreilly/NetCoreForce/actions?query=workflow%3ACI+branch%3Adev)  
+[![CI](https://github.com/anthonyreilly/NetCoreForce/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/anthonyreilly/NetCoreForce/actions/workflows/ci.yml)
 
-NetCoreForce v3 currently targeting netstandard 2.0 & 2.1, supports .NET Core 2.1 & 3.1 apps.
 
-For .NET Core 1.x support, use NetCoreForce v2.7
 
 ### Projects in this solution:
 * [NetCoreForce.Client](src/NetCoreForce.Client)
@@ -35,20 +95,14 @@ For .NET Core 1.x support, use NetCoreForce v2.7
 * [NetCoreForce.Models](https://www.nuget.org/packages/NetCoreForce.Models/)
 * [NetCoreForce.ModelGenerator](https://www.nuget.org/packages/NetCoreForce.ModelGenerator/)
 
-### An effort is made to minimize the dependencies:
+### Designed to minimize dependencies:
 * [Newtonsoft.Json](https://www.nuget.org/packages/Newtonsoft.Json) (JSON Serialization)
 * [System.Text.Encodings.Web](https://www.nuget.org/packages/System.Text.Encodings.Web) (URL formatting)
 * [Microsoft.Bcl.AsyncInterfaces](https://www.nuget.org/packages/Microsoft.Bcl.AsyncInterfaces/)
     - Only included in .netstandard2.0, .netcoreapp2.0 targets
     - Provides await using, async disposables
 
-### Experimental Projects:
-* Please note: The LINQ library has barely been tested, and is not recommended for production use. Consider it an alpha release.
-* [NetCoreForce.Linq](src/NetCoreForce.Linq) - an experimental LINQ-to-SOQL query provider
-* [NetCoreForce.Linq.Tests](src/NetCoreForce.Linq.Tests) - LINQ Unit tests (offline/mocked)
-* NuGet package: [NetCoreForce.Linq](https://www.nuget.org/packages/NetCoreForce.Linq/)
-* Retains a dependency on [System.Interactive.Async](https://www.nuget.org/packages/System.Interactive.Async/)
-
+(Migration from Newtonsoft.Json to System.Text.Json is planned)
 
 Feedback and suggestions welcome.
 

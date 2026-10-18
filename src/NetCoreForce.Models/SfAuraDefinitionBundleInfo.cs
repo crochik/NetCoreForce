@@ -1,4 +1,4 @@
-// SF API version v50.0
+// SF API version v67.0
 // Custom fields included: False
 // Relationship objects included: True
 
@@ -9,7 +9,7 @@ using Newtonsoft.Json;
 namespace NetCoreForce.Models
 {
 	///<summary>
-	/// AuraDefinitionBundle Info
+	/// Aura Definition Bundle Info
 	///<para>SObject Name: AuraDefinitionBundleInfo</para>
 	///<para>Custom Object: False</para>
 	///</summary>
@@ -22,7 +22,7 @@ namespace NetCoreForce.Models
 		}
 
 		///<summary>
-		/// Lightning Definition Bundle ID
+		/// Aura Component Bundle ID
 		/// <para>Name: Id</para>
 		/// <para>SF Type: id</para>
 		/// <para>Nillable: False</para>
@@ -42,7 +42,7 @@ namespace NetCoreForce.Models
 		public string DurableId { get; set; }
 
 		///<summary>
-		/// Lightning Definition Bundle ID
+		/// Aura Component Bundle ID
 		/// <para>Name: AuraDefinitionBundleId</para>
 		/// <para>SF Type: string</para>
 		/// <para>Nillable: False</para>

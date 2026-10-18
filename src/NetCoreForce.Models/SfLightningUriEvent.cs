@@ -1,4 +1,4 @@
-// SF API version v50.0
+// SF API version v67.0
 // Custom fields included: False
 // Relationship objects included: True
 
@@ -241,6 +241,46 @@ namespace NetCoreForce.Models
 		public double? EffectivePageTime { get; set; }
 
 		///<summary>
+		/// Has Effective Page Time Deviation
+		/// <para>Name: HasEffectivePageTimeDeviation</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "hasEffectivePageTimeDeviation")]
+		[Updateable(false), Createable(false)]
+		public bool? HasEffectivePageTimeDeviation { get; set; }
+
+		///<summary>
+		/// Effective Page Time Deviation Error Type
+		/// <para>Name: EffectivePageTimeDeviationErrorType</para>
+		/// <para>SF Type: string</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "effectivePageTimeDeviationErrorType")]
+		[Updateable(false), Createable(false)]
+		public string EffectivePageTimeDeviationErrorType { get; set; }
+
+		///<summary>
+		/// Effective Page Time Deviation Reason
+		/// <para>Name: EffectivePageTimeDeviationReason</para>
+		/// <para>SF Type: string</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "effectivePageTimeDeviationReason")]
+		[Updateable(false), Createable(false)]
+		public string EffectivePageTimeDeviationReason { get; set; }
+
+		///<summary>
+		/// User Agent
+		/// <para>Name: UserAgent</para>
+		/// <para>SF Type: string</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "userAgent")]
+		[Updateable(false), Createable(false)]
+		public string UserAgent { get; set; }
+
+		///<summary>
 		/// OS Name
 		/// <para>Name: OsName</para>
 		/// <para>SF Type: string</para>
@@ -369,6 +409,42 @@ namespace NetCoreForce.Models
 		[JsonProperty(PropertyName = "userType")]
 		[Updateable(false), Createable(false)]
 		public string UserType { get; set; }
+
+		///<summary>
+		/// Profile ID
+		/// <para>Name: ProfileId</para>
+		/// <para>SF Type: reference</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "profileId")]
+		[Updateable(false), Createable(false)]
+		public string ProfileId { get; set; }
+
+		///<summary>
+		/// ReferenceTo: Profile
+		/// <para>RelationshipName: Profile</para>
+		///</summary>
+		[JsonProperty(PropertyName = "profile")]
+		[Updateable(false), Createable(false)]
+		public SfProfile Profile { get; set; }
+
+		///<summary>
+		/// Role ID
+		/// <para>Name: RoleId</para>
+		/// <para>SF Type: reference</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "roleId")]
+		[Updateable(false), Createable(false)]
+		public string RoleId { get; set; }
+
+		///<summary>
+		/// ReferenceTo: UserRole
+		/// <para>RelationshipName: Role</para>
+		///</summary>
+		[JsonProperty(PropertyName = "role")]
+		[Updateable(false), Createable(false)]
+		public SfUserRole Role { get; set; }
 
 	}
 }

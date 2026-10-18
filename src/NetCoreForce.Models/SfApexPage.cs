@@ -1,4 +1,4 @@
-// SF API version v50.0
+// SF API version v67.0
 // Custom fields included: False
 // Relationship objects included: True
 
@@ -23,7 +23,7 @@ namespace NetCoreForce.Models
 		}
 
 		///<summary>
-		/// Page ID
+		/// Visualforce Page ID
 		/// <para>Name: Id</para>
 		/// <para>SF Type: id</para>
 		/// <para>Nillable: False</para>
@@ -97,7 +97,7 @@ namespace NetCoreForce.Models
 		public string ControllerKey { get; set; }
 
 		///<summary>
-		/// Available for Lightning Experience, Lightning Communities, and the mobile app
+		/// Available for Lightning Experience, Experience Builder sites, and the mobile app
 		/// <para>Name: IsAvailableInTouch</para>
 		/// <para>SF Type: boolean</para>
 		/// <para>Nillable: False</para>

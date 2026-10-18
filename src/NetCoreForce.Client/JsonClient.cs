@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -8,6 +10,8 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using NetCoreForce.Client.Serializer;
 using NetCoreForce.Client.Models;
 
 namespace NetCoreForce.Client
@@ -23,7 +27,7 @@ namespace NetCoreForce.Client
         //By default, and the ideal case, is using the static readonly HttpClient.
         //Alternatively, for testing and special cases, a class instance instnace of an HttpClient can be used instead.
         private static readonly HttpClient _SharedHttpClient;
-        private readonly HttpClient _httpClient;
+        private HttpClient _httpClient;
         private HttpClient SharedHttpClient
         {
             get
@@ -33,7 +37,7 @@ namespace NetCoreForce.Client
             }
         }
 
-        private readonly AuthenticationHeaderValue _authHeaderValue;
+        AuthenticationHeaderValue _authHeaderValue;
 
         /// <summary>
         /// JSON Client static constructor, initializes the default shared HttpClient instance.
@@ -47,11 +51,15 @@ namespace NetCoreForce.Client
         /// Intialize the JSON client.
         /// <para>By default, uses a shared static HttpClient instance for best performance.</para>
         /// </summary>
-        /// <param name="accessToken">API Access token</param>
+        /// <param name="accessToken">API Access token. If null or empty, requests are sent without an Authorization header.</param>
         /// <param name="httpClient">Optional custom HttpClient. Ideally this should be a shared static instance for best performance.</param>
         public JsonClient(string accessToken, HttpClient httpClient = null)
         {
-            _authHeaderValue = new AuthenticationHeaderValue("Bearer", accessToken);
+            if (!string.IsNullOrEmpty(accessToken))
+            {
+                HeaderFormatter.ValidateHeaderValue(accessToken, nameof(accessToken));
+                _authHeaderValue = new AuthenticationHeaderValue("Bearer", accessToken);
+            }
 
             if (httpClient != null)
             {
@@ -59,14 +67,40 @@ namespace NetCoreForce.Client
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="uri"></param>
+        /// <param name="customHeaders"></param>
+        /// <param name="deserializeResponse"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
         public async Task<T> HttpGetAsync<T>(Uri uri, Dictionary<string, string> customHeaders = null, bool deserializeResponse = true)
         {
-            return await HttpAsync<T>(uri, HttpMethod.Get, null, customHeaders, deserializeResponse);
+            //TODO: can this handle T = string?
+            return await HttpAsync<T>(uri, HttpMethod.Get, null, customHeaders, deserializeResponse).ConfigureAwait(false);
         }
 
-        public async Task<T> HttpPostAsync<T>(object inputObject, Uri uri, Dictionary<string, string> customHeaders = null, bool deserializeResponse = true)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="inputObject"></param>
+        /// <param name="uri"></param>
+        /// <param name="customHeaders"></param>
+        /// <param name="deserializeResponse"></param>
+        /// <param name="fieldsToNull"></param>
+        /// <param name="ignoreNulls"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public async Task<T> HttpPostAsync<T>(
+            object inputObject,
+            Uri uri,
+            Dictionary<string, string> customHeaders = null,
+            bool deserializeResponse = true,
+            List<string> fieldsToNull = null,
+            bool ignoreNulls = true)
         {
-            var json = JsonSerializer.SerializeForCreate(inputObject);
+            var json = JsonSerializer.SerializeForCreate(inputObject, fieldsToNull, ignoreNulls);
 
             var content = new StringContent(json, Encoding.UTF8, JsonMimeType);
 
@@ -76,7 +110,7 @@ namespace NetCoreForce.Client
             request.Method = HttpMethod.Post;
             request.Content = content;
 
-            return await GetResponse<T>(request, customHeaders, deserializeResponse);
+            return await GetResponse<T>(request, customHeaders, deserializeResponse).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -88,29 +122,47 @@ namespace NetCoreForce.Client
         /// <param name="deserializeResponse"></param>
         /// <param name="serializeComplete">Serializes ALL object properties to include in the request, even those not appropriate for some update/patch calls.</param>
         /// <param name="includeSObjectId">includes the SObject ID when serializing the request content</param>
+        /// <param name="fieldsToNull">A list of properties that should be set to null, but inclusing the null values in the serialized output</param>
+        /// <param name="ignoreNulls">Use with caution. By default null values are not serialized, this will serialize all explicitly nulled or missing properties as null</param>  
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public async Task<T> HttpPatchAsync<T>(object inputObject, Uri uri, Dictionary<string, string> customHeaders = null, bool deserializeResponse = true, bool serializeComplete = false, bool includeSObjectId = false)
+        public async Task<T> HttpPatchAsync<T>(
+            object inputObject,
+            Uri uri,
+            Dictionary<string, string> customHeaders = null,
+            bool deserializeResponse = true,
+            bool serializeComplete = false,
+            bool includeSObjectId = false,
+            List<string> fieldsToNull = null,
+            bool ignoreNulls = true)
         {
             string json;
             if (serializeComplete)
             {
-                json = JsonSerializer.SerializeComplete(inputObject, false);
+                json = JsonSerializer.SerializeComplete(inputObject, false, fieldsToNull: fieldsToNull, ignoreNulls: ignoreNulls);
             }
             else if (includeSObjectId)
             {
-                json = JsonSerializer.SerializeForUpdateWithObjectId(inputObject);
+                json = JsonSerializer.SerializeForUpdateWithObjectId(inputObject, fieldsToNull: fieldsToNull, ignoreNulls: ignoreNulls);
             }
             else
             {
-                json = JsonSerializer.SerializeForUpdate(inputObject);
+                json = JsonSerializer.SerializeForUpdate(inputObject, fieldsToNull: fieldsToNull, ignoreNulls: ignoreNulls);
             }
 
             var content = new StringContent(json, Encoding.UTF8, JsonMimeType);
 
-            return await HttpAsync<T>(uri, new HttpMethod("PATCH"), content, customHeaders, deserializeResponse);
+            return await HttpAsync<T>(uri, new HttpMethod("PATCH"), content, customHeaders, deserializeResponse).ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="uri"></param>
+        /// <param name="customHeaders"></param>
+        /// <param name="deserializeResponse"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
         public async Task<T> HttpDeleteAsync<T>(Uri uri, Dictionary<string, string> customHeaders = null, bool deserializeResponse = true)
         {
             HttpRequestMessage request = new HttpRequestMessage();
@@ -118,7 +170,7 @@ namespace NetCoreForce.Client
             request.RequestUri = uri;
             request.Method = HttpMethod.Delete;
 
-            return await GetResponse<T>(request, customHeaders, deserializeResponse);
+            return await GetResponse<T>(request, customHeaders, deserializeResponse).ConfigureAwait(false);
         }
 
         private async Task<T> HttpAsync<T>(Uri uri, HttpMethod httpMethod, HttpContent content = null, Dictionary<string, string> customHeaders = null, bool deserializeResponse = true)
@@ -132,7 +184,7 @@ namespace NetCoreForce.Client
                 request.Content = content;
             }
 
-            return await GetResponse<T>(request, customHeaders, deserializeResponse);
+            return await GetResponse<T>(request, customHeaders, deserializeResponse).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -151,6 +203,7 @@ namespace NetCoreForce.Client
             {
                 foreach (KeyValuePair<string, string> header in customHeaders)
                 {
+                    HeaderFormatter.ValidateHeaderValue(header.Value, nameof(customHeaders));
                     request.Headers.Add(header.Key, header.Value);
                 }
             }
@@ -168,9 +221,18 @@ namespace NetCoreForce.Client
                     errMsg += " " + ex.InnerException.Message;
                 }
                 Debug.WriteLine(errMsg);
-                throw new ForceApiException(errMsg);
+                throw new ForceApiException(errMsg, ex);
             }
 
+            //dispose the response once processed, so its connection is returned to the pool
+            using (responseMessage)
+            {
+                return await ProcessResponse<T>(request, responseMessage, deserializeResponse).ConfigureAwait(false);
+            }
+        }
+
+        private async Task<T> ProcessResponse<T>(HttpRequestMessage request, HttpResponseMessage responseMessage, bool deserializeResponse)
+        {
 #if DEBUG
             //API usage response header
             //e.g. "Sforce-Limit-Info: api-usage=90/15000"
@@ -184,13 +246,13 @@ namespace NetCoreForce.Client
 
             if (responseMessage.StatusCode == HttpStatusCode.NoContent)
             {
-                return DeserializeObject<T>(string.Empty);
+                return JsonSerializer.Deserialize<T>(string.Empty);
             }
 
             //sucessful response, skip deserialization of response content
             if (responseMessage.IsSuccessStatusCode && !deserializeResponse)
             {
-                return DeserializeObject<T>(string.Empty);
+                return JsonSerializer.Deserialize<T>(string.Empty);
             }
 
             if (responseMessage.Content != null)
@@ -206,7 +268,7 @@ namespace NetCoreForce.Client
                             throw new ForceApiException("Response content was empty");
                         }
 
-                        return DeserializeObject<T>(responseContent);
+                        return JsonSerializer.Deserialize<T>(responseContent);
                     }
                     if (responseMessage.StatusCode == HttpStatusCode.MultipleChoices)
                     {
@@ -219,7 +281,7 @@ namespace NetCoreForce.Client
                             throw new ForceApiException("Response content was empty");
                         }
 
-                        var results = DeserializeObject<List<string>>(responseContent);
+                        var results = JsonSerializer.Deserialize<List<string>>(responseContent);
 
                         var fex = new ForceApiException("Multiple matches for External ID value, see ObjectUrls");
 
@@ -229,13 +291,28 @@ namespace NetCoreForce.Client
                     }
                     else
                     {
+                        try
+                        {
+                            // Check if error response is from tree request
+                            if (typeof(T) == typeof(SObjectTreeResponse))
+                            {
+                                T errorReponse = JsonSerializer.Deserialize<T>(responseContent);
+                                return errorReponse;
+                            }
+                        }
+                        catch
+                        {   
+                            // swallow error and continue to parse as generic error response instead
+                        }                       
+
+                        // Parse generic API error response
                         string msg = string.Format("Unable to complete request, Salesforce API returned {0}.", responseMessage.StatusCode.ToString());
 
                         List<ErrorResponse> errors = null;
 
                         try
                         {
-                            errors = DeserializeObject<List<ErrorResponse>>(responseContent);
+                            errors = JsonSerializer.Deserialize<List<ErrorResponse>>(responseContent);
 
                             // There will often only be one error code - append this to the message
                             if (errors != null && errors.Count > 0)
@@ -251,15 +328,15 @@ namespace NetCoreForce.Client
                         }
                         catch (Exception ex)
                         {
-                            msg += string.Format(" Unable to parse error details: {0}" + ex.Message);
+                            msg += string.Format(" Unable to parse error details: {0}", ex.Message);
                         }
 
                         throw new ForceApiException(msg, errors, responseMessage.StatusCode);
                     }
                 }
-                catch (ForceApiException ex)
+                catch (ForceApiException)
                 {
-                    throw ex;
+                    throw;
                 }
                 catch (Exception ex)
                 {
@@ -270,19 +347,18 @@ namespace NetCoreForce.Client
             throw new ForceApiException(string.Format("Error processing response: returned {0} for {1}", responseMessage.ReasonPhrase, request.RequestUri.ToString()));
         }
 
-        private T DeserializeObject<T>(string json) => JsonConvert.DeserializeObject<T>(json, new JsonSerializerSettings { DateTimeZoneHandling = DateTimeZoneHandling.Utc });
-
         /// <summary>
         /// Get values for a particular reponse header
         /// </summary>
         /// <param name="headers">HttpHeaders from the HttpResponseMessage</param>
         /// <param name="headerName">Header Name</param>
         /// <returns>IEnumerable{string} of header values, if any, Null if none found.</returns>
-        private static IEnumerable<string> GetHeaderValues(HttpHeaders headers, string headerName)
+        private IEnumerable<string> GetHeaderValues(HttpHeaders headers, string headerName)
         {
             if (headers != null)
             {
-                if (headers.TryGetValues(headerName, out IEnumerable<string> values))
+                IEnumerable<string> values;
+                if (headers.TryGetValues(headerName, out values))
                 {
                     return values;
                 }
@@ -293,15 +369,11 @@ namespace NetCoreForce.Client
         }
 
         /// <summary>
-        /// Dispose client - only disposes instance HttpClient, if any. Shared static HttpClient is left as-is.
+        /// Dispose client - does not dispose the HttpClient.
+        /// <para>A caller-supplied HttpClient is owned by the caller, and the shared static HttpClient is left as-is.</para>
         /// </summary>
         public void Dispose()
         {
-            //only dispose instance member, if any
-            if (_httpClient != null)
-            {
-                _httpClient.Dispose();
-            }
         }
     }
 }

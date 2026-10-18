@@ -5,7 +5,13 @@
 !*config_example.json
 scratch/
 clean.sh
+scrub.sh
 TestOutput
+Clean-BinObj.ps1
+
+# DocFx output
+docs/_site/
+docs/api
 
 # NuGet package output
 packages/

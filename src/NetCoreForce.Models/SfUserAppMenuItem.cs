@@ -1,4 +1,4 @@
-// SF API version v50.0
+// SF API version v67.0
 // Custom fields included: False
 // Relationship objects included: True
 
@@ -122,7 +122,7 @@ namespace NetCoreForce.Models
 		public string LogoUrl { get; set; }
 
 		///<summary>
-		/// Icon Url
+		/// Icon URL
 		/// <para>Name: IconUrl</para>
 		/// <para>SF Type: url</para>
 		/// <para>Nillable: True</para>
@@ -142,7 +142,7 @@ namespace NetCoreForce.Models
 		public string InfoUrl { get; set; }
 
 		///<summary>
-		/// Start Url
+		/// Start URL
 		/// <para>Name: StartUrl</para>
 		/// <para>SF Type: url</para>
 		/// <para>Nillable: True</para>
@@ -152,7 +152,7 @@ namespace NetCoreForce.Models
 		public string StartUrl { get; set; }
 
 		///<summary>
-		/// Mobile Start Url
+		/// Mobile Start URL
 		/// <para>Name: MobileStartUrl</para>
 		/// <para>SF Type: url</para>
 		/// <para>Nillable: True</para>

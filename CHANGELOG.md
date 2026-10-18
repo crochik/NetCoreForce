@@ -1,5 +1,144 @@
 # Changelog
 
+### 2026-10-07 v6.1.0
+
+* security: TokenRefreshAsync and IntrospectTokenAsync now send the refresh/access token and client secret in the POST body instead of the URL query string, where they could be recorded by proxies, APM tools and HTTP logs
+    - both now validate their arguments like the other login flows: ArgumentNullException for a missing token, client ID or endpoint, FormatException for a non-absolute endpoint URL
+* security: UriFormatter.OAuthAuthenticationUrl no longer adds the client secret to the browser authorize URL, and is now obsolete - use WebServerAuthenticationUrl
+* UriFormatter.RefreshTokenUrl and UriFormatter.IntrospectTokenUrl are now obsolete, since they put credentials in the URL
+* security: token endpoints and instance URLs must now be HTTPS - credentials and the access token are no longer sent over plain http. This also applies to the `instance_url` returned in a token response
+* security: the API version is now validated (e.g. `v67.0`) - previously a value such as `//other.host/x` or `v67.0/../..` could redirect requests, and the access token, to another host or resource
+* security: query paging only follows a `nextRecordsUrl` on the same instance under `/services/data/`
+* security: GetAvailableRestApiVersions and TestConnection no longer send the access token, since the Versions resource needs no authentication and can be pointed at any instance URL
+* security: Sforce-Call-Options values (ForceClient.ClientName, defaultNamespace), custom header values and the access token are rejected if they contain control characters, which could inject headers on .NET Framework. Call option values also can't contain `,` or `=`
+* security: JSON serialization no longer picks up the host application's global JsonConvert.DefaultSettings, e.g. a global TypeNameHandling setting that would allow `$type` in a response to instantiate arbitrary types
+* security: object and field API names with a trailing newline, and Apex REST URLs with encoded path separators (`%2F`, `%5C`, `%25`), are now rejected
+* security: AuthenticationClient's default HttpClient no longer follows redirects, since a 307/308 redirect would re-send the credentials to the redirect location
+* security: ModelGenerator hardening
+    - object, field and relationship names from the org's metadata, and the class prefix/suffix and namespace, are validated before being written into generated code or used as file names
+    - new `NETCOREFORCE_CLIENT_SECRET` and `NETCOREFORCE_PASSWORD` environment variables; `--client-secret` and `--password` still work but print a warning, since command line arguments are visible in shell history and process listings
+    - the client secret and password prompts no longer echo the input
+    - `--save-config` no longer saves the client secret, password or refresh token
+    - shows the token endpoint host before logging in
+    - fix: config files given as a relative path are resolved against the current directory, as documented
+* fix: AuthenticationClient always throws ForceAuthException for a failed or unexpected token response
+    - WebServerAsync and ClientCredentialsAsync now keep the OAuth error code (e.g. `invalid_grant`) instead of replacing it with `Unknown`
+    - a non-JSON or empty response (e.g. an HTML page from a proxy) throws ForceAuthException instead of JsonReaderException or NullReferenceException
+* fix: date strings (DateFormats, ToSfDateString) are now culture-invariant - previously cultures with a different time separator (e.g. fi-FI) or calendar (e.g. th-TH) produced invalid SOQL date literals
+* fix: Query and QueryAsync stop with ForceApiException if a response repeats the previous nextRecordsUrl, instead of looping forever, and handle a response without records. QueryAsync no longer follows a nextRecordsUrl once the response is marked done
+* fix: HTTP responses are disposed once read, returning connections to the pool sooner, including a failed blob download
+* fix: ForceApiException(message, ErrorResponse, HttpStatusCode) now keeps the status code, and send failures keep the original exception as InnerException. Exceptions rethrown from the synchronous constructors and UsernamePassword keep their original stack trace
+* build: System.Text.Encodings.Web is only referenced for .NET Standard and .NET Framework - .NET 8+ uses the framework's serviced copy
+* build: CI workflows use least-privilege permissions, docs are only deployed for pushes (not pull requests), and docfx is pinned
+* build: added a repo nuget.config that restores only from nuget.org, so machine-level package feeds are not used
+* build: packages built from a project directly (not the solution) now go to the repo's `packages` folder instead of `\packages` at the drive root
+
+* fix: ForceClient, JsonClient and AuthenticationClient no longer dispose an HttpClient passed in by the caller - the caller owns it
+* fix: AuthenticationClient now uses a shared static HttpClient by default, like ForceClient and JsonClient, instead of creating a new HttpClient (and connection pool) per instance - repeated logins no longer leak sockets
+* fix: HttpClients created by HttpClientFactory.CreateHttpClient (including the shared static clients) now replace pooled connections every 2 minutes, so long-running processes pick up DNS changes
+    - .NET 8+: uses SocketsHttpHandler with PooledConnectionLifetime (except on browser and mobile platforms, which keep their native handler)
+    - .NET Framework: sets ServicePoint.ConnectionLeaseTimeout for each request's host
+    - .NET Standard builds are unchanged
+
+### 2026-10-06 v6.0.0
+
+* **breaking** build: remove EOL target frameworks
+    - removed build and test targets for .NET Core 3.1, .NET 5.0, .NET 6.0, and .NET 7.0
+    - the library still targets .NET Standard 2.0, so it should still run under these frameworks, but they are no longer built or tested
+    - the NetCoreForce.ModelGenerator tool now requires .NET 8.0 or later
+* **breaking** security: prevent URL path injection via record IDs and object/field names
+    - object and field API names (e.g. sObjectTypeName, external ID field name, blob field) must be valid API names, otherwise an ArgumentException is thrown
+    - record IDs containing `/ \ ? # %`, or equal to `.` or `..`, now throw an ArgumentException - previously a value such as `../Contact/003XXXXXXXXXXXXXXX` could redirect a request to a different object or resource
+    - Apex REST resource URLs containing `.` or `..` path segments now throw an ArgumentException
+* security: GetUserInfo now requires an absolute HTTPS identity URL, since the access token is sent to that URL
+* feat: add .NET 10.0 and .NET Framework 4.8.1 targets
+* feat: add Client Credentials login flow (fixes #90)
+    - ForceClient: new FromClientCredentialsAsync factory method, and ClientCredentials AuthMethod option for the ForceClient(AuthInfo) constructor
+    - ModelGenerator: Client Credentials login support
+* feat: add SoqlHelpers with EscapeString, EscapeLike, and EscapeSosl, for safely including untrusted values in SOQL and SOSL queries
+* feat: add optional RefreshToken property to AuthInfo
+* config: update default SFDC API version to v67.0 in AuthenticationClient and ModelGenerator
+* fix: external ID values are now URL-encoded in upsert requests, so values containing characters such as `/ ? # %` or spaces work correctly
+* fix: SObjectRowsByExternalId now validates that the external ID value is not null or empty
+* fix: TokenRefreshAsync now returns the new refresh token when refresh token rotation is enabled, instead of overwriting it with the previous token (fixes #94, PR #95)
+* fix: timezone offset formatting in DateFormats when converting dates under .NET Framework 4.x
+    - switched from the zzz custom format specifier to logic based on DateTime.Kind
+    - .NET Core/.NET 8+ were unaffected
+* fix: ModelGenerator namespace option was not being applied to generated classes
+* docs: new documentation pages for authentication flows and usage examples, docfx config moved to project root
+* build: update GitHub Actions to latest versions
+* test: test updates
+    - functional tests use xUnit v3 on .NET 8+ and .NET Framework 4.7.2+, and xUnit v2 on .NET Framework 4.6.2
+    - SOSL tests create and clean up their own sample records, and are manual only (Explicit) due to long search indexing times
+    - new functional tests for composite requests, external ID special characters, SOQL escaping, and GetUserInfo
+    - additional offline unit tests, including URL path injection, SOQL/SOSL escaping, and token refresh
+    - timezone test fixes for different TZ IDs on Windows and Linux, the TZ mocker under .NET Framework 4.x, parallel test execution, and runners in the GMT/UTC timezone
+    - removed a test that is no longer valid due to the retirement of legacy instance URLs
+
+### 2025-06-10 v5.0.0
+
+* feat: branched off and removed LINQ project, as it is unlikely to become production ready in the new future
+* test: updated functional test in NullValueTests to avoid duplicate error on create
+* test: updated packages, updated deprecated async void methods
+* build, test, and target updates
+    - Set library targets to .NET Standard 2.0 & 2.1, .NET Core 3.1, .NET 6.0-9.0, .NET Framework 4.6.2, 4.7.2, 4.8
+    - Tests target .NET Core 6.0-9.0
+* config: update SFDC API default to v64.0
+* content: Updated default SFDC object models in NetCoreForce.Models to SF API v64.0
+* fix: remove forced UTC conversion for DateTimeKind.Unspecified DateTimes.  
+        this caused inconsistent behavior between Windows and other platforms as under Windows it would end up adding a utc offset to the date.  
+        NetCoreForce.Client.Tests.DateFormatTests.FullDateFormatFromDateTime  
+        Expected: "2018-01-01T00:00:00+00:00"  
+        Actual:   "2018-01-01T00:00:00-05:00" (under Windows)  
+
+### 2025-02-24 v5.0.0-Beta
+
+* feat: Add ConfigureAwait(false) to await calls (PR #71 jtsai-osa)
+* feat: Pass through HttpClient from ForceClient to AuthenticationClient (PR #76 saithis)
+* feat: Add more composite endpoints. Add token introspection. Add call for custom APEX code (PR #72 phess101)
+* build: Add .NET 9 build targets
+
+### 2024-05-24 v4.1.0
+
+* fix: Update PicklistValue.Validfor to byte[]
+
+### 2024-03-29 v4.1.0-Beta
+
+* feat: added .net8.0 build and test targets
+* feat: add client credentials flow
+* fix: Add field CalculatedFormula to SObjectFieldMetadata
+* fix: Add field AdditionalData to ErrorResponse
+
+### 2023-06-06 v4.0.0
+
+* feat: add FieldsToNull and IngoreNulls options to control null field serialization and to allow explicitly setting fields to null
+* chore: updated older API references to v57.0
+* feat: updated pregenerated models to API v57.0
+* test: updated CreateMultiple test
+* build: updated package references to latest
+* build: update GitHub actions to latest
+* build: clean up EOL framework warnings, add conditional includes for .net6.0 and older builds
+
+### 2023-01-26 v4.0.0 Beta2
+
+* feat: Partial sObjectTree API resource support - added CreateMultipleRecords to create multiple records in a single request
+    - see https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/dome_composite_sobject_tree_flat.htm
+* feat: updated ExternalIdInsertAndUpdate to return new UpsertResponse object that adds the Created flag
+    - this includes a minor breaking change, as this method originally returned a CreateResponse object. Calls can be updated to use the UpsertResponse object without any further breaking changes as it is inherited from the CreateResponse object.
+* feat: added .net 7 build and test target
+* feat: added BlobRetrieveStream() to download blob data attached to records
+* fix: update Newtonsoft.json to v13 
+* fix: Syntax error in error message generator
+* feat: Update ForceClient to use static shared HttpClient by default, unless custom instance is specified
+* feat: Add FieldsToNull parameter to updates to allow explicitly setting fields to null. (Note: this requries both setting the value itself to null, in addition to adding the property name to the list)
+
+### 2022-01-13 v3.1.0
+
+* feat: add .NET 6 support
+* build: add net6.0 build and test targets
+* build: on MacOS only target .net6.0 (Workaround for issues developing muti-arch on M1 processor machines)
+* chore: remove unnecessary exception catching and re-throws
+
 ### 2021-05-07 v3.0.1
 
 * Fix: incorrect URI when calling organization limits, make URI formatting more consistent
@@ -136,9 +275,9 @@ This a major update, and introduces several breaking changes. It resolves severa
 
 ### 2017-10-25 v1.2.0
 * ModelGenerator: Fixed ability to generate all objects at once, and clarified option in console prompts - specifying "all" as the object name will include all available objects in the output.
-* Client: Update default client SFDC API version to v41.0
-* Models: Regenerated sample models againt SFDC API v41.0
-* Update SFDC API references in test cases and documentation to v41.0
+* Client: Update default client SFDC API version to v57.0
+* Models: Regenerated sample models againt SFDC API v57.0
+* Update SFDC API references in test cases and documentation to v57.0
 
 ### 2017-10-11 v1.1.0
 * Update ModelGenerator from netcoreapp1.0 to netcoreapp1.1, fixes crash with 1.0 runtime on MacOS 10.13

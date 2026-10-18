@@ -1,25 +1,38 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Dynamic;
 using System.Reflection;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using McMaster.Extensions.CommandLineUtils;
 using NetCoreForce.Client;
 using NetCoreForce.Client.Models;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace NetCoreForce.ModelGenerator
 {
     class Program
     {
+        /// <summary>
+        /// Gets a human-readable string for which value maps to which auth method type
+        /// </summary>
+        /// <returns>
+        /// For example: <c>1 or UsernamePassword, 2 or ClientCredentials</c>
+        /// </returns>
+        private static string ValidAuthTypesInputString =>
+            string.Join(", ", Enum.GetValues(typeof(AuthInfo.AuthMethodType)).Cast<AuthInfo.AuthMethodType>().Select(v => $"{(int)v} or {v}"));
+
         const string defaultConfigFilename = "modelgenerator_config.json";
 
-        static void Main(string[] args)
+        //environment variables for secrets - command line options are visible in shell history and process listings
+        const string ClientSecretEnvVar = "NETCOREFORCE_CLIENT_SECRET";
+        const string PasswordEnvVar = "NETCOREFORCE_PASSWORD";
+
+        static int Main(string[] args)
         {
             var app = new CommandLineApplication();
             app.Name = "modelgenerator";
@@ -43,9 +56,10 @@ namespace NetCoreForce.ModelGenerator
 
                 command.ExtendedHelpText = Environment.NewLine +
                 "You can supply the API credentials either in the config file, the command parameters, or wait to be prompted for that information." + Environment.NewLine +
+                "Client Credentials is the recommended auth method - Salesforce has deprecated the Username-Password flow, and it may be disabled in your org." + Environment.NewLine +
                 "If you choose to save the config file, be careful with it as it may contain your API credentials.";
 
-                //Authentication
+                //Authentication options
                 var clientIdOption = command.Option("--client-id",
                     "API Client ID, a.k.a. Consumer Key",
                     CommandOptionType.SingleValue);
@@ -55,28 +69,37 @@ namespace NetCoreForce.ModelGenerator
                     CommandOptionType.SingleValue);
 
                 var usernameOption = command.Option("--username",
-                    "API Username",
+                    "API Username (UsernamePassword auth method only)",
                     CommandOptionType.SingleValue);
 
                 var passwordOption = command.Option("--password",
-                    "API Password",
+                    "API Password (UsernamePassword auth method only)",
                     CommandOptionType.SingleValue);
 
+                var authMethodOption = command.Option("--auth-method",
+                    $"Auth method, valid inputs: {ValidAuthTypesInputString}",
+                    CommandOptionType.SingleValue);
+
+                var tokenRequestEndpointOption = command.Option("--token-request-endpoint",
+                    $"Token request endpoint, default: {GenConfig.DefaultTokenRequestEndpoint}. The ClientCredentials auth method requires your org's My Domain token endpoint, e.g. https://your-domain.my.salesforce.com/services/oauth2/token",
+                    CommandOptionType.SingleValue);
+
+                //Config options
                 var configFileOption = command.Option("--config-file",
-                    "Config file path",
+                    $"Config file path, default: {defaultConfigFilename} in the current directory",
                     CommandOptionType.SingleValue);
 
                 var saveConfigOption = command.Option("--save-config",
-                    "Save options to config file, uses filename from --config-file option",
+                    "Save options to the config file, using the --config-file path if specified",
                     CommandOptionType.NoValue);
 
                 //generation options
                 var includeOption = command.Option("-o|--objects <objects>",
-                    "Object models to generate, if omitted all objects will be generated",
+                    "Object model to generate. Repeat for multiple objects, or use 'all' to generate all objects. If omitted, you will be prompted",
                     CommandOptionType.MultipleValue);
 
                 var outputDirectory = command.Option("-d|--output-directory <directory>",
-                    "Destination directory for generated file(s)",
+                    "Destination directory for generated file(s), created if it doesn't exist. Defaults to the current directory",
                     CommandOptionType.SingleValue);
 
                 var suffixOption = command.Option("-s|--suffix <suffix>",
@@ -84,7 +107,7 @@ namespace NetCoreForce.ModelGenerator
                     CommandOptionType.SingleValue);
 
                 var prefixOption = command.Option("-p|--prefix <prefix>",
-                    "Prefix to for object names, e.g. 'Sf' for 'SfAccount'",
+                    "Prefix to prepend to object names, e.g. 'Sf' for 'SfAccount'",
                     CommandOptionType.SingleValue);
 
                 var namespaceName = command.Option("-n|--namespace <namespace>",
@@ -115,9 +138,15 @@ namespace NetCoreForce.ModelGenerator
                         config.AuthInfo.ClientId = clientIdOption.Value();
                     }
 
+                    //secrets: command line option, then environment variable, then config file, then prompt
                     if (clientSecretOption.HasValue())
                     {
+                        WarnSecretOnCommandLine("--client-secret", ClientSecretEnvVar);
                         config.AuthInfo.ClientSecret = clientSecretOption.Value();
+                    }
+                    else if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable(ClientSecretEnvVar)))
+                    {
+                        config.AuthInfo.ClientSecret = Environment.GetEnvironmentVariable(ClientSecretEnvVar);
                     }
 
                     if (usernameOption.HasValue())
@@ -127,7 +156,28 @@ namespace NetCoreForce.ModelGenerator
 
                     if (passwordOption.HasValue())
                     {
+                        WarnSecretOnCommandLine("--password", PasswordEnvVar);
                         config.AuthInfo.Password = passwordOption.Value();
+                    }
+                    else if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable(PasswordEnvVar)))
+                    {
+                        config.AuthInfo.Password = Environment.GetEnvironmentVariable(PasswordEnvVar);
+                    }
+
+                    if (authMethodOption.HasValue())
+                    {
+                        if (Enum.TryParse(authMethodOption.Value(), ignoreCase: true, out AuthInfo.AuthMethodType authMethod))
+                            config.AuthInfo.AuthMethod = authMethod;
+                        else
+                        {
+                            Console.WriteLine($"Invalid auth method input, valid inputs: {ValidAuthTypesInputString}");
+                            return 1;
+                        }
+                    }
+
+                    if (tokenRequestEndpointOption.HasValue())
+                    {
+                        config.AuthInfo.TokenRequestEndpoint = tokenRequestEndpointOption.Value();
                     }
 
                     if (customOption.HasValue())
@@ -150,7 +200,7 @@ namespace NetCoreForce.ModelGenerator
                         config.ClassSuffix = suffixOption.Value();
                     }
 
-                    if (suffixOption.HasValue())
+                    if (namespaceName.HasValue())
                     {
                         config.ClassNamespace = namespaceName.Value();
                     }
@@ -168,9 +218,20 @@ namespace NetCoreForce.ModelGenerator
                     //check for minimum needed options and prompt if necessary
                     config = CheckOptions(config);
 
+                    //these are written into the generated source
+                    CodeGenValidation.Affix(config.ClassPrefix, "Class prefix");
+                    CodeGenValidation.Affix(config.ClassSuffix, "Class suffix");
+                    CodeGenValidation.Namespace(config.ClassNamespace);
+
                     if (saveConfigOption.HasValue())
                     {
                         SaveConfig(config, configFileOption.Value());
+                    }
+
+                    //check the output directory before logging in, so an invalid path fails fast
+                    if (!EnsureOutputDirectory(config))
+                    {
+                        return 1;
                     }
 
                     Console.Write("Generate models for " + string.Join(", ", config.Objects));
@@ -191,15 +252,17 @@ namespace NetCoreForce.ModelGenerator
 
             try
             {
-                app.Execute(args);
+                return app.Execute(args);
             }
             catch (CommandParsingException ex)
             {
                 Console.WriteLine(ex.Message);
+                return 1;
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Unable to execute application: {0}", ex.Message);
+                return 1;
             }
         }
 
@@ -209,6 +272,30 @@ namespace NetCoreForce.ModelGenerator
         private static GenConfig CheckOptions(GenConfig config)
         {
             //check required auth options
+            while (config.AuthInfo.AuthMethod == null)
+            {
+                Console.WriteLine("Enter Auth Method:");
+                string consoleReadLine = Console.ReadLine();
+
+                if (Enum.TryParse(consoleReadLine, ignoreCase: true, out AuthInfo.AuthMethodType authMethod))
+                    config.AuthInfo.AuthMethod = authMethod;
+                else
+                    Console.WriteLine($"Invalid input, valid inputs: {ValidAuthTypesInputString}");
+
+                Console.WriteLine();
+            }
+
+            while ((
+                       string.IsNullOrEmpty(config.AuthInfo.TokenRequestEndpoint) ||
+                       config.AuthInfo.TokenRequestEndpoint == GenConfig.DefaultTokenRequestEndpoint
+                   ) &&
+                   config.AuthInfo.AuthMethod == AuthInfo.AuthMethodType.ClientCredentials)
+            {
+                Console.WriteLine("Enter Token Request Endpoint:");
+                config.AuthInfo.TokenRequestEndpoint = Console.ReadLine();
+                Console.WriteLine();
+            }
+
             while (string.IsNullOrEmpty(config.AuthInfo.ClientId))
             {
                 Console.WriteLine("Enter API Client ID:");
@@ -219,21 +306,21 @@ namespace NetCoreForce.ModelGenerator
             while (string.IsNullOrEmpty(config.AuthInfo.ClientSecret))
             {
                 Console.WriteLine("Enter API Client Secret:");
-                config.AuthInfo.ClientSecret = Console.ReadLine();
+                config.AuthInfo.ClientSecret = ReadSecret();
                 Console.WriteLine();
             }
 
-            while (string.IsNullOrEmpty(config.AuthInfo.Username))
+            while (string.IsNullOrEmpty(config.AuthInfo.Username) && config.AuthInfo.AuthMethod == AuthInfo.AuthMethodType.UsernamePassword)
             {
                 Console.WriteLine("Enter API username:");
                 config.AuthInfo.Username = Console.ReadLine();
                 Console.WriteLine();
             }
 
-            while (string.IsNullOrEmpty(config.AuthInfo.Password))
+            while (string.IsNullOrEmpty(config.AuthInfo.Password) && config.AuthInfo.AuthMethod == AuthInfo.AuthMethodType.UsernamePassword)
             {
                 Console.WriteLine("Enter API password:");
-                config.AuthInfo.Password = Console.ReadLine();
+                config.AuthInfo.Password = ReadSecret();
                 Console.WriteLine();
             }
 
@@ -264,6 +351,93 @@ namespace NetCoreForce.ModelGenerator
             return config;
         }
 
+        /// <summary>
+        /// Read a secret from the console without echoing it. Falls back to a plain read when input is redirected.
+        /// </summary>
+        private static string ReadSecret()
+        {
+            if (Console.IsInputRedirected)
+            {
+                return Console.ReadLine();
+            }
+
+            StringBuilder secret = new StringBuilder();
+            while (true)
+            {
+                ConsoleKeyInfo key = Console.ReadKey(intercept: true);
+                if (key.Key == ConsoleKey.Enter)
+                {
+                    break;
+                }
+
+                if (key.Key == ConsoleKey.Backspace)
+                {
+                    if (secret.Length > 0)
+                    {
+                        secret.Length--;
+                    }
+                    continue;
+                }
+
+                if (!char.IsControl(key.KeyChar))
+                {
+                    secret.Append(key.KeyChar);
+                }
+            }
+
+            Console.WriteLine();
+            return secret.ToString();
+        }
+
+        private static void WarnSecretOnCommandLine(string optionName, string envVarName)
+        {
+            Console.Error.WriteLine($"Warning: {optionName} exposes the secret in shell history and process listings. Set the {envVarName} environment variable instead, or omit it to be prompted.");
+        }
+
+        /// <summary>
+        /// Resolves the output directory, defaulting to the current directory, and creates it if it doesn't exist
+        /// </summary>
+        /// <returns>True if the output directory exists or was created</returns>
+        private static bool EnsureOutputDirectory(GenConfig config)
+        {
+            string outputDirectory = config.OutputDirectory;
+
+            if (string.IsNullOrEmpty(outputDirectory))
+            {
+                outputDirectory = Directory.GetCurrentDirectory();
+            }
+
+            //expand a leading ~ to the user's home directory, since it isn't expanded by the shell when set in the config file
+            if (outputDirectory == "~" || outputDirectory.StartsWith("~/") || outputDirectory.StartsWith("~\\"))
+            {
+                string homeDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                outputDirectory = Path.Combine(homeDirectory, outputDirectory.Substring(1).TrimStart('/', '\\'));
+            }
+
+            try
+            {
+                outputDirectory = Path.GetFullPath(outputDirectory);
+                config.OutputDirectory = outputDirectory;
+
+                if (Directory.Exists(outputDirectory))
+                {
+                    Console.WriteLine("Output directory: " + outputDirectory);
+                }
+                else
+                {
+                    Directory.CreateDirectory(outputDirectory);
+                    Console.WriteLine("Created output directory: " + outputDirectory);
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Unable to create output directory {outputDirectory}: {ex.Message}");
+                return false;
+            }
+        }
+
         private static bool SaveConfig(GenConfig config, string filePath = null)
         {
             try
@@ -274,17 +448,25 @@ namespace NetCoreForce.ModelGenerator
                 }
 
                 //if using the default filename, or just a filename was given, set the path to the current directory
-                if (System.IO.Path.IsPathRooted(filePath))
+                if (!Path.IsPathRooted(filePath))
                 {
-                    string executabledirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
-                    filePath = Path.Combine(executabledirectory, filePath);
+                    filePath = Path.Combine(Directory.GetCurrentDirectory(), filePath);
                 }
 
                 Console.WriteLine($"Saving config file to {filePath}");
 
-                string contents = JsonConvert.SerializeObject(config, Formatting.Indented);
+                //secrets are not saved - the file is easily committed or shared by mistake
+                JObject contents = JObject.FromObject(config);
+                if (contents["AuthInfo"] is JObject authInfo)
+                {
+                    authInfo.Remove("clientSecret");
+                    authInfo.Remove("password");
+                    authInfo.Remove("refreshToken");
+                }
 
-                File.WriteAllText(filePath, contents, Encoding.Unicode);
+                File.WriteAllText(filePath, contents.ToString(Formatting.Indented), Encoding.Unicode);
+
+                Console.WriteLine($"The client secret and password are not saved - set the {ClientSecretEnvVar} and {PasswordEnvVar} environment variables, or enter them when prompted.");
 
                 return true;
             }
@@ -305,10 +487,9 @@ namespace NetCoreForce.ModelGenerator
                 }
 
                 //if using the default filename, or just a filename was given, set the path to the current directory
-                if (System.IO.Path.IsPathRooted(filePath))
+                if (!Path.IsPathRooted(filePath))
                 {
-                    string executabledirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
-                    filePath = Path.Combine(executabledirectory, filePath);
+                    filePath = Path.Combine(Directory.GetCurrentDirectory(), filePath);
                 }
 
                 if (!File.Exists(filePath))
@@ -336,17 +517,35 @@ namespace NetCoreForce.ModelGenerator
         {
 
             AuthenticationClient auth = new AuthenticationClient(config.AuthInfo.ApiVersion);
+
+            //show where the credentials are being sent, so a config file pointing somewhere unexpected is noticed
+            if (Uri.TryCreate(config.AuthInfo.TokenRequestEndpoint, UriKind.Absolute, out Uri tokenEndpoint))
+            {
+                Console.WriteLine($"Logging in via {tokenEndpoint.Host}");
+            }
+
             try
             {
-                await auth.UsernamePasswordAsync(config.AuthInfo.ClientId, config.AuthInfo.ClientSecret,
-                    config.AuthInfo.Username, config.AuthInfo.Password, config.AuthInfo.TokenRequestEndpoint);
+                switch (config.AuthInfo.AuthMethod)
+                {
+                    case AuthInfo.AuthMethodType.UsernamePassword:
+                        await auth.UsernamePasswordAsync(config.AuthInfo.ClientId, config.AuthInfo.ClientSecret,
+                            config.AuthInfo.Username, config.AuthInfo.Password, config.AuthInfo.TokenRequestEndpoint);
+                        break;
+                    case AuthInfo.AuthMethodType.ClientCredentials:
+                        await auth.ClientCredentialsAsync(config.AuthInfo.ClientId, config.AuthInfo.ClientSecret,
+                            config.AuthInfo.TokenRequestEndpoint);
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(config.AuthInfo.AuthMethod), $"authMethodInt is out of range, value: {(int)config.AuthInfo.AuthMethod}");
+                }
 
                 Console.WriteLine("Connected to Salesforce");
             }
             catch (ForceAuthException ex)
             {
                 Console.WriteLine("Error authenticating: " + ex.Message);
-                throw ex;
+                throw;
             }
 
             ForceClient client = new ForceClient(auth.AccessInfo.InstanceUrl, auth.ApiVersion, auth.AccessInfo.AccessToken);
@@ -370,14 +569,6 @@ namespace NetCoreForce.ModelGenerator
             }
 
             var global = await client.DescribeGlobal();
-
-            if (string.IsNullOrEmpty(config.OutputDirectory))
-            {
-                config.OutputDirectory = Directory.GetCurrentDirectory();
-            }
-
-            Console.WriteLine("Output directory: " + config.OutputDirectory);
-
 
             bool generateAll = false;
             if (config.Objects != null && config.Objects.Count > 0)
@@ -423,9 +614,8 @@ namespace NetCoreForce.ModelGenerator
 
                 Console.Write("Generating model for {0} - ", obj.Name);
 
-                string className = obj.Name;
-
-                className = string.Format("{0}{1}{2}", config.ClassPrefix ?? string.Empty, className, config.ClassSuffix ?? string.Empty);
+                //the class name is also the file name, so it must not contain path characters
+                string className = CodeGenValidation.Identifier(GetPrefixedSuffixed(config, CodeGenValidation.Identifier(obj.Name, "Object name")), "Class name");
 
                 await CreateModel(client, obj.Name, className, config);
             }
@@ -450,6 +640,9 @@ namespace NetCoreForce.ModelGenerator
         {
             SObjectDescribeFull data = await client.GetObjectDescribe(objectName);
 
+            //names from the describe response are written into the generated source
+            CodeGenValidation.Identifier(data.Name, "Object name");
+
             StringBuilder gen = new StringBuilder();
 
             //gen.AppendLine("// Model generated on " + DateTime.Now.ToString("yyyy-MM-dd"));
@@ -473,7 +666,7 @@ namespace NetCoreForce.ModelGenerator
                 gen.AppendLine("{");
             }
             gen.AppendLine("\t///<summary>");
-            gen.AppendLine($"\t/// {WebUtility.HtmlEncode(data.Label)}");
+            gen.AppendLine($"\t/// {DocCommentText(data.Label)}");
             gen.AppendLine($"\t///<para>SObject Name: {data.Name}</para>");
             gen.AppendLine($"\t///<para>Custom Object: {data.Custom.ToString()}</para>");
             gen.AppendLine("\t///</summary>");
@@ -499,12 +692,14 @@ namespace NetCoreForce.ModelGenerator
                     if (field.Custom && !config.IncludeCustom)
                     {
                         continue;
-                    }                    
+                    }
+
+                    CodeGenValidation.Identifier(field.Name, $"Field name on {data.Name}");
 
                     gen.AppendLine("\t\t///<summary>");
-                    gen.AppendLine("\t\t/// " + WebUtility.HtmlEncode(field.Label));
+                    gen.AppendLine("\t\t/// " + DocCommentText(field.Label));
                     gen.AppendLine("\t\t/// <para>Name: " + field.Name + "</para>");
-                    gen.AppendLine("\t\t/// <para>SF Type: " + field.Type + "</para>");
+                    gen.AppendLine("\t\t/// <para>SF Type: " + DocCommentText(field.Type) + "</para>");
                     if (field.AutoNumber)
                     {
                         gen.AppendLine("\t\t/// <para>AutoNumber field</para>");
@@ -560,11 +755,14 @@ namespace NetCoreForce.ModelGenerator
 
                     if (field.Type == "reference" && config.IncludeReferences)
                     {
-                        if (string.IsNullOrEmpty(field.RelationshipName) || field.ReferenceTo.Count > 1)
+                        if (string.IsNullOrEmpty(field.RelationshipName) || field.ReferenceTo == null || field.ReferenceTo.Count != 1)
                         {
                             //only do single-object relationships
                             continue;
                         }
+
+                        CodeGenValidation.Identifier(field.RelationshipName, $"Relationship name on {data.Name}");
+                        CodeGenValidation.Identifier(field.ReferenceTo[0], $"Referenced object name on {data.Name}");
 
                         if(field.RelationshipName == "ContentBody")
                         {
@@ -588,7 +786,7 @@ namespace NetCoreForce.ModelGenerator
                 catch (Exception ex)
                 {
                     Console.WriteLine("Exception generating models: " + ex.Message);
-                    throw ex;
+                    throw;
                 }
             }
 
@@ -606,6 +804,21 @@ namespace NetCoreForce.ModelGenerator
         private static string GetPrefixedSuffixed(GenConfig config, string name)
         {
             return string.Format("{0}{1}{2}", config.ClassPrefix ?? string.Empty, name, config.ClassSuffix ?? string.Empty);
+        }
+
+        /// <summary>
+        /// Formats text for a single line XML doc comment - collapses line breaks and repeated whitespace, and encodes XML characters.
+        /// <para>Some Salesforce labels contain line breaks, which would otherwise end the doc comment early and produce badly formed XML.</para>
+        /// </summary>
+        private static string DocCommentText(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                return string.Empty;
+            }
+
+            string singleLine = Regex.Replace(text, @"\s+", " ").Trim();
+            return WebUtility.HtmlEncode(singleLine);
         }
 
         private static string JsonName(string fieldName)
