@@ -1,4 +1,4 @@
-// SF API version v50.0
+// SF API version v67.0
 // Custom fields included: False
 // Relationship objects included: True
 
@@ -143,7 +143,7 @@ namespace NetCoreForce.Models
 		public bool? IsSwingFlow { get; set; }
 
 		///<summary>
-		/// Api Version
+		/// API Version
 		/// <para>Name: ApiVersion</para>
 		/// <para>SF Type: double</para>
 		/// <para>Nillable: True</para>
@@ -153,7 +153,7 @@ namespace NetCoreForce.Models
 		public double? ApiVersion { get; set; }
 
 		///<summary>
-		/// Api Version Runtime
+		/// API Version Runtime
 		/// <para>Name: ApiVersionRuntime</para>
 		/// <para>SF Type: double</para>
 		/// <para>Nillable: True</para>
@@ -161,6 +161,36 @@ namespace NetCoreForce.Models
 		[JsonProperty(PropertyName = "apiVersionRuntime")]
 		[Updateable(false), Createable(false)]
 		public double? ApiVersionRuntime { get; set; }
+
+		///<summary>
+		/// Capability Type
+		/// <para>Name: CapabilityType</para>
+		/// <para>SF Type: string</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "capabilityType")]
+		[Updateable(false), Createable(false)]
+		public string CapabilityType { get; set; }
+
+		///<summary>
+		/// Capacity Category
+		/// <para>Name: CapacityCategory</para>
+		/// <para>SF Type: picklist</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "capacityCategory")]
+		[Updateable(false), Createable(false)]
+		public string CapacityCategory { get; set; }
+
+		///<summary>
+		/// Log Metrics to Data Cloud
+		/// <para>Name: AreMetricsLoggedToDataCloud</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "areMetricsLoggedToDataCloud")]
+		[Updateable(false), Createable(false)]
+		public bool? AreMetricsLoggedToDataCloud { get; set; }
 
 	}
 }

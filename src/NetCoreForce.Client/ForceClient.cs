@@ -1,11 +1,16 @@
-﻿using System;
+﻿using NetCoreForce.Client.Enumerations;
+using NetCoreForce.Client.Models;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using NetCoreForce.Client.Models;
 
 namespace NetCoreForce.Client
 {
@@ -22,15 +27,47 @@ namespace NetCoreForce.Client
         /// </summary>
         public AccessTokenResponse AccessInfo { get; set; }
 
+        private static readonly HttpClient _SharedHttpClient;
         private HttpClient _httpClient;
+        private HttpClient SharedHttpClient
+        {
+            get
+            {
+                //use the instance client when extant, otherwise use the default shared instance.
+                return _httpClient ?? _SharedHttpClient;
+            }
+        }
+
+        static ForceClient()
+        {
+            _SharedHttpClient = HttpClientFactory.CreateHttpClient();
+        }
 
         /// <summary>
-        /// Login to Salesforce using the username-password authentication flow, and initialize the client
+        /// Login to Salesforce and initialize the client, using the flow specified by <see cref="AuthInfo.AuthMethod" />
+        /// (username-password if not set, for backward compatibility).
+        /// <para>Client Credentials flow may require the org's specific My Domain token endpoint rather than the generic login.salesforce.com one.</para>
         /// </summary>
         /// <param name="authInfo"></param>
         public ForceClient(AuthInfo authInfo)
-        : this(authInfo.ClientId, authInfo.ClientSecret, authInfo.Username, authInfo.Password, authInfo.TokenRequestEndpoint, authInfo.ApiVersion)
-        { }
+        {
+            try
+            {
+                if (authInfo.AuthMethod == AuthInfo.AuthMethodType.ClientCredentials)
+                {
+                    LoginClientCredentials(authInfo.ClientId, authInfo.ClientSecret, authInfo.TokenRequestEndpoint, authInfo.ApiVersion).Wait();
+                }
+                else
+                {
+                    Login(authInfo.ClientId, authInfo.ClientSecret, authInfo.Username, authInfo.Password, authInfo.TokenRequestEndpoint, authInfo.ApiVersion).Wait();
+                }
+            }
+            catch (AggregateException ax)
+            {
+                //rethrow the original exception, keeping its stack trace
+                ExceptionDispatchInfo.Capture(ax.InnerException).Throw();
+            }
+        }
 
         /// <summary>
         /// Login to Salesforce using the username-password authentication flow, and initialize the client
@@ -50,7 +87,8 @@ namespace NetCoreForce.Client
             }
             catch (AggregateException ax)
             {
-                throw ax.InnerException;
+                //rethrow the original exception, keeping its stack trace
+                ExceptionDispatchInfo.Capture(ax.InnerException).Throw();
             }
         }
 
@@ -67,22 +105,61 @@ namespace NetCoreForce.Client
             Initialize(instanceUrl, apiVersion, accessToken, httpClient, accessInfo);
         }
 
+        /// <summary>
+        /// Login to Salesforce using the Client Credentials OAuth flow, and initialize the client
+        /// <para>May require the org's specific My Domain token endpoint rather than the generic login.salesforce.com one.</para>
+        /// </summary>
+        /// <param name="clientId">The Consumer Key from the connected app definition.</param>
+        /// <param name="clientSecret">The Consumer Secret from the connected app definition.</param>
+        /// <param name="tokenRequestEndpoint">Salesforce token request endpoint</param>
+        /// <param name="apiVersion">Salesforce API version</param>
+        /// <param name="httpClient">Optional HttpClient object. Defaults to a shared static instance for best performance, but a custom HttpClient can be specified when custom properties are needed e.g. proxy settings.</param>
+        public static async Task<ForceClient> FromClientCredentialsAsync(string clientId, string clientSecret, string tokenRequestEndpoint, string apiVersion = null, HttpClient httpClient = null)
+        {
+            using (AuthenticationClient authClient = new AuthenticationClient(apiVersion, httpClient))
+            {
+                await authClient.ClientCredentialsAsync(clientId, clientSecret, tokenRequestEndpoint).ConfigureAwait(false);
+                return new ForceClient(authClient.AccessInfo.InstanceUrl, authClient.ApiVersion, authClient.AccessInfo.AccessToken, httpClient, authClient.AccessInfo);
+            }
+        }
+
         private async Task Login(string clientId, string clientSecret, string username, string password, string tokenRequestEndpoint, string apiVersion = null, HttpClient httpClient = null)
         {
-            AuthenticationClient authClient = new AuthenticationClient(apiVersion);
-            await authClient.UsernamePasswordAsync(clientId, clientSecret, username, password, tokenRequestEndpoint);
+            using (AuthenticationClient authClient = new AuthenticationClient(apiVersion, httpClient))
+            {
+                await authClient.UsernamePasswordAsync(clientId, clientSecret, username, password, tokenRequestEndpoint).ConfigureAwait(false);
 
-            Initialize(authClient.AccessInfo.InstanceUrl, authClient.ApiVersion, authClient.AccessInfo.AccessToken, httpClient, authClient.AccessInfo);
+                Initialize(authClient.AccessInfo.InstanceUrl, authClient.ApiVersion, authClient.AccessInfo.AccessToken, httpClient, authClient.AccessInfo);
+            }
+        }
+
+        private async Task LoginClientCredentials(string clientId, string clientSecret, string tokenRequestEndpoint, string apiVersion = null, HttpClient httpClient = null)
+        {
+            using (AuthenticationClient authClient = new AuthenticationClient(apiVersion, httpClient))
+            {
+                await authClient.ClientCredentialsAsync(clientId, clientSecret, tokenRequestEndpoint).ConfigureAwait(false);
+
+                Initialize(authClient.AccessInfo.InstanceUrl, authClient.ApiVersion, authClient.AccessInfo.AccessToken, httpClient, authClient.AccessInfo);
+            }
         }
 
         private void Initialize(string instanceUrl, string apiVersion, string accessToken, HttpClient httpClient = null, AccessTokenResponse accessInfo = null)
         {
+            //fail early - these are validated again when each request URL is built.
+            //instanceUrl may come from a token response, and the access token must only be sent over HTTPS
+            if (!string.IsNullOrEmpty(instanceUrl)) UriFormatter.ValidateHttpsUrl(instanceUrl, nameof(instanceUrl));
+            if (!string.IsNullOrEmpty(apiVersion)) UriFormatter.ValidateApiVersion(apiVersion, nameof(apiVersion));
+            if (!string.IsNullOrEmpty(accessToken)) HeaderFormatter.ValidateHeaderValue(accessToken, nameof(accessToken));
+
             this.ApiVersion = apiVersion;
             this.InstanceUrl = instanceUrl;
             this.AccessToken = accessToken;
             this.AccessInfo = accessInfo;
 
-            _httpClient = httpClient;
+            if (httpClient != null)
+            {
+                _httpClient = httpClient;
+            }
         }
 
         /// <summary>
@@ -126,7 +203,7 @@ namespace NetCoreForce.Client
                 Dictionary<string, string> headers = HeaderFormatter.SforceCallOptions(ClientName);
                 var queryUri = UriFormatter.Query(InstanceUrl, ApiVersion, queryString, queryAll);
 
-                JsonClient client = new JsonClient(AccessToken, _httpClient);
+                JsonClient client = new JsonClient(AccessToken, SharedHttpClient);
 
                 List<T> results = new List<T>();
 
@@ -139,19 +216,33 @@ namespace NetCoreForce.Client
                 {
                     if (!string.IsNullOrEmpty(nextRecordsUrl))
                     {
-                        queryUri = new Uri(new Uri(InstanceUrl), nextRecordsUrl);
+                        queryUri = UriFormatter.NextRecordsUri(InstanceUrl, nextRecordsUrl);
                     }
 
-                    QueryResult<T> qr = await client.HttpGetAsync<QueryResult<T>>(queryUri, headers);
+                    QueryResult<T> qr = await client.HttpGetAsync<QueryResult<T>>(queryUri, headers).ConfigureAwait(false);
+
+                    if (qr == null)
+                    {
+                        throw new ForceApiException("Query response was empty");
+                    }
 
 #if DEBUG
                     Debug.WriteLine(string.Format("Got query resuts, {0} totalSize, {1} in this batch, final batch: {2}",
-                        qr.TotalSize, qr.Records.Count.ToString(), qr.Done.ToString()));
+                        qr.TotalSize, (qr.Records?.Count ?? 0).ToString(), qr.Done.ToString()));
 #endif
 
-                    results.AddRange(qr.Records);
+                    if (qr.Records != null)
+                    {
+                        results.AddRange(qr.Records);
+                    }
 
                     done = qr.Done;
+
+                    //a repeated nextRecordsUrl would otherwise loop forever
+                    if (!done && !string.IsNullOrEmpty(qr.NextRecordsUrl) && qr.NextRecordsUrl == nextRecordsUrl)
+                    {
+                        throw new ForceApiException($"Query response repeated the previous nextRecordsUrl: {nextRecordsUrl}");
+                    }
 
                     nextRecordsUrl = qr.NextRecordsUrl;
 
@@ -188,7 +279,7 @@ namespace NetCoreForce.Client
         /// <returns>result object</returns>
         public async Task<T> QuerySingle<T>(string queryString, bool queryAll = false)
         {
-            List<T> results = await Query<T>(queryString, queryAll);
+            List<T> results = await Query<T>(queryString, queryAll).ConfigureAwait(false);
 
             if (results != null && results.Count > 1)
             {
@@ -227,22 +318,35 @@ namespace NetCoreForce.Client
                 headers.AddRange(queryOptions);
             }
 
-            var jsonClient = new JsonClient(AccessToken, _httpClient);
+            var jsonClient = new JsonClient(AccessToken, SharedHttpClient);
 
             var nextRecordsUri = UriFormatter.Query(InstanceUrl, ApiVersion, queryString, queryAll);
+            string previousNextRecordsUrl = null;
             bool hasMoreRecords = true;
 
             while (hasMoreRecords)
             {
-                var qr = await jsonClient.HttpGetAsync<QueryResult<T>>(nextRecordsUri, headers);
+                var qr = await jsonClient.HttpGetAsync<QueryResult<T>>(nextRecordsUri, headers).ConfigureAwait(false);
+
+                if (qr == null)
+                {
+                    throw new ForceApiException("Query response was empty");
+                }
 
 #if DEBUG
-                Debug.WriteLine($"Got query resuts, {qr.TotalSize} totalSize, {qr.Records.Count} in this batch, final batch: {qr.Done}");
+                Debug.WriteLine($"Got query resuts, {qr.TotalSize} totalSize, {qr.Records?.Count ?? 0} in this batch, final batch: {qr.Done}");
 #endif
 
-                if (!string.IsNullOrEmpty(qr.NextRecordsUrl))
+                if (!qr.Done && !string.IsNullOrEmpty(qr.NextRecordsUrl))
                 {
-                    nextRecordsUri = new Uri(new Uri(InstanceUrl), qr.NextRecordsUrl);
+                    //a repeated nextRecordsUrl would otherwise loop forever
+                    if (qr.NextRecordsUrl == previousNextRecordsUrl)
+                    {
+                        throw new ForceApiException($"Query response repeated the previous nextRecordsUrl: {previousNextRecordsUrl}");
+                    }
+
+                    previousNextRecordsUrl = qr.NextRecordsUrl;
+                    nextRecordsUri = UriFormatter.NextRecordsUri(InstanceUrl, qr.NextRecordsUrl);
                     hasMoreRecords = true;
                 }
                 else
@@ -252,9 +356,12 @@ namespace NetCoreForce.Client
                     hasMoreRecords = false;
                 }
 
-                foreach (T record in qr.Records)
+                if (qr.Records != null)
                 {
-                    yield return record;
+                    foreach (T record in qr.Records)
+                    {
+                        yield return record;
+                    }
                 }
             }
         }
@@ -278,9 +385,9 @@ namespace NetCoreForce.Client
                 throw new ForceApiException("CountQueryAsync may only be used with a query starting with SELECT COUNT() FROM");
             }
 
-            var jsonClient = new JsonClient(AccessToken, _httpClient);
+            var jsonClient = new JsonClient(AccessToken, SharedHttpClient);
             var uri = UriFormatter.Query(InstanceUrl, ApiVersion, queryString);
-            var qr = await jsonClient.HttpGetAsync<QueryResult<object>>(uri, headers);
+            var qr = await jsonClient.HttpGetAsync<QueryResult<object>>(uri, headers).ConfigureAwait(false);
 
             return qr.TotalSize;
         }
@@ -298,9 +405,9 @@ namespace NetCoreForce.Client
                 Dictionary<string, string> headers = HeaderFormatter.SforceCallOptions(ClientName);
                 var uri = UriFormatter.Search(InstanceUrl, ApiVersion, searchString);
 
-                JsonClient client = new JsonClient(AccessToken, _httpClient);
+                JsonClient client = new JsonClient(AccessToken, SharedHttpClient);
 
-                SearchResult<T> searchResult = await client.HttpGetAsync<SearchResult<T>>(uri, headers);
+                SearchResult<T> searchResult = await client.HttpGetAsync<SearchResult<T>>(uri, headers).ConfigureAwait(false);
 
                 return searchResult;
             }
@@ -323,9 +430,9 @@ namespace NetCoreForce.Client
                 Dictionary<string, string> headers = HeaderFormatter.SforceCallOptions(ClientName);
                 var uri = UriFormatter.Search(InstanceUrl, ApiVersion, searchString);
 
-                JsonClient client = new JsonClient(AccessToken, _httpClient);
+                JsonClient client = new JsonClient(AccessToken, SharedHttpClient);
 
-                SearchResult<SObjectGeneric> searchResult = await client.HttpGetAsync<SearchResult<SObjectGeneric>>(uri, headers);
+                SearchResult<SObjectGeneric> searchResult = await client.HttpGetAsync<SearchResult<SObjectGeneric>>(uri, headers).ConfigureAwait(false);
 
                 return searchResult;
             }
@@ -347,9 +454,9 @@ namespace NetCoreForce.Client
             Dictionary<string, string> headers = HeaderFormatter.SforceCallOptions(ClientName);
             var uri = UriFormatter.SObjectRows(InstanceUrl, ApiVersion, sObjectTypeName, objectId, fields);
 
-            JsonClient client = new JsonClient(AccessToken, _httpClient);
+            JsonClient client = new JsonClient(AccessToken, SharedHttpClient);
 
-            return await client.HttpGetAsync<T>(uri, headers);
+            return await client.HttpGetAsync<T>(uri, headers).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -358,9 +465,16 @@ namespace NetCoreForce.Client
         /// <param name="sObjectTypeName">SObject name, e.g. "Account"</param>
         /// <param name="sObject">Object to create</param>
         /// <param name="customHeaders">Custom headers to include in request (Optional). await The HeaderFormatter helper class can be used to generate the custom header as needed.</param>
+        /// <param name="fieldsToNull">A list of properties that should be set to null, but inclusing the null values in the serialized output</param>
+        /// <param name="ignoreNulls">Use with caution. By default null values are not serialized, this will serialize all explicitly nulled or missing properties as null</param>
         /// <returns>CreateResponse object, includes new object's ID</returns>
         /// <exception cref="ForceApiException">Thrown when creation fails</exception>
-        public async Task<CreateResponse> CreateRecord<T>(string sObjectTypeName, T sObject, Dictionary<string, string> customHeaders = null)
+        public async Task<CreateResponse> CreateRecord<T>(
+            string sObjectTypeName,
+            T sObject,
+            Dictionary<string, string> customHeaders = null,
+            List<string> fieldsToNull = null,
+            bool ignoreNulls = true)
         {
             Dictionary<string, string> headers = new Dictionary<string, string>();
 
@@ -376,21 +490,102 @@ namespace NetCoreForce.Client
 
             var uri = UriFormatter.SObjectBasicInformation(InstanceUrl, ApiVersion, sObjectTypeName);
 
-            JsonClient client = new JsonClient(AccessToken, _httpClient);
+            JsonClient client = new JsonClient(AccessToken, SharedHttpClient);
 
-            return await client.HttpPostAsync<CreateResponse>(sObject, uri, headers);
+            return await client.HttpPostAsync<CreateResponse>(sObject, uri, headers, fieldsToNull: fieldsToNull, ignoreNulls: ignoreNulls).ConfigureAwait(false);
         }
 
         /// <summary>
-        /// Updates
+        /// Create mlutiple records
+        /// </summary>
+        /// <param name="sObjectTypeName">SObject name, e.g. "Account"</param>
+        /// <param name="sObjects">Objects to create. Each sObject must have the entity type and reference id in the attributes property object.</param>
+        /// <param name="customHeaders">Custom headers to include in request (Optional). await The HeaderFormatter helper class can be used to generate the custom header as needed.</param>
+        /// <param name="autoFillAttributes">Automatically create attribute object property, reference Id will be the zero-based index of the array</param>
+        /// <param name="fieldsToNull">A list of properties that should be set to null, but inclusing the null values in the serialized output</param>
+        /// <param name="ignoreNulls">Use with caution. By default null values are not serialized, this will serialize all explicitly nulled or missing properties as null</param>
+        /// <returns>SObjectTreeResponse object, includes new object IDs, and errors if any</returns>
+        /// <exception cref="ForceApiException">Thrown when creation fails</exception>
+        public async Task<SObjectTreeResponse> CreateMultiple(
+            string sObjectTypeName,
+            List<SObject> sObjects,
+            bool autoFillAttributes = true,
+            Dictionary<string, string> customHeaders = null,
+            List<string> fieldsToNull = null,
+            bool ignoreNulls = true)
+        {
+            if (sObjects == null)
+            {
+                throw new ArgumentNullException("sObjects");
+            }
+
+            if (sObjects.Count > 200)
+            {
+                throw new ForceApiException($"A maximum of 200 records can be created in a single request - request included {sObjects.Count} records.");
+            }
+
+            if (autoFillAttributes)
+            {
+                for (int i = 0; i < sObjects.Count; i++)
+                {
+                    sObjects[i].Attributes = new SObjectAttributes()
+                    {
+                        ReferenceId = i.ToString(),
+                        Type = sObjectTypeName
+                    };
+                }
+            }
+            else
+            {
+                foreach (SObject obj in sObjects)
+                {
+                    if (obj.Attributes == null || string.IsNullOrEmpty(obj.Attributes.ReferenceId) || string.IsNullOrEmpty(obj.Attributes.Type))
+                    {
+                        throw new ArgumentException("All objects in request must include a reference id and sObject type name in the attributes");
+                    }
+                }
+            }
+
+            Dictionary<string, string> headers = new Dictionary<string, string>();
+
+            //Add call options
+            Dictionary<string, string> callOptions = HeaderFormatter.SforceCallOptions(ClientName);
+            headers.AddRange(callOptions);
+
+            //Add custom headers if specified
+            if (customHeaders != null)
+            {
+                headers.AddRange(customHeaders);
+            }
+
+            var uri = UriFormatter.SObjectTree(InstanceUrl, ApiVersion, sObjectTypeName);
+
+            JsonClient client = new JsonClient(AccessToken, SharedHttpClient);
+
+            SObjectTreeRequest treeRequest = new SObjectTreeRequest(sObjects);
+
+            return await client.HttpPostAsync<SObjectTreeResponse>(treeRequest, uri, headers, fieldsToNull: fieldsToNull, ignoreNulls: ignoreNulls).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Update single record
         /// </summary>
         /// <param name="sObjectTypeName">SObject name, e.g. "Account"</param>
         /// <param name="objectId">Id of Object to update</param>
         /// <param name="sObject">Object to update</param>
         /// <param name="customHeaders">Custom headers to include in request (Optional). await The HeaderFormatter helper class can be used to generate the custom header as needed.</param>
+        /// <param name="fieldsToNull">A list of properties that should be set to null, but inclusing the null values in the serialized output</param>
+        /// <param name="ignoreNulls">Use with caution. By default null values are not serialized, this will serialize all explicitly nulled or missing properties as null</param>
+        /// <typeparam name="T"></typeparam>
         /// <returns>void, API returns 204/NoContent</returns>
         /// <exception cref="ForceApiException">Thrown when update fails</exception>
-        public async Task UpdateRecord<T>(string sObjectTypeName, string objectId, T sObject, Dictionary<string, string> customHeaders = null)
+        public async Task UpdateRecord<T>(
+            string sObjectTypeName,
+            string objectId,
+            T sObject,
+            Dictionary<string, string> customHeaders = null,
+            List<string> fieldsToNull = null,
+            bool ignoreNulls = true)
         {
             Dictionary<string, string> headers = new Dictionary<string, string>();
 
@@ -406,15 +601,15 @@ namespace NetCoreForce.Client
 
             var uri = UriFormatter.SObjectRows(InstanceUrl, ApiVersion, sObjectTypeName, objectId);
 
-            JsonClient client = new JsonClient(AccessToken, _httpClient);
+            JsonClient client = new JsonClient(AccessToken, SharedHttpClient);
 
-            await client.HttpPatchAsync<object>(sObject, uri, headers);
+            await client.HttpPatchAsync<object>(sObject, uri, headers, ignoreNulls: ignoreNulls, fieldsToNull: fieldsToNull).ConfigureAwait(false);
 
             return;
         }
 
         /// <summary>
-        /// Update multiple reocrds.
+        /// Update multiple records.
         /// The list can contain up to 200 objects.
         /// The list can contain objects of different types, including custom objects.
         /// Each object must contain an attributes map. The map must contain a value for type.
@@ -423,19 +618,26 @@ namespace NetCoreForce.Client
         /// <param name="sObjects">Objects to update</param>
         /// <param name="allOrNone">Optional. Indicates whether to roll back the entire request when the update of any object fails (true) or to continue with the independent update of other objects in the request. The default is false.</param>
         /// <param name="customHeaders">Custom headers to include in request (Optional). await The HeaderFormatter helper class can be used to generate the custom header as needed.</param>
-        /// <returns>List of UpdateMultipleResponse objects, includes response for each object (id, success, errors)</returns>
+        /// <param name="fieldsToNull">A list of properties that should be set to null, but inclusing the null values in the serialized output</param>
+        /// <param name="ignoreNulls">Use with caution. By default null values are not serialized, this will serialize all explicitly nulled or missing properties as null</param>
+        /// <returns>List of UpsertResponse objects, includes response for each object (id, success, errors)</returns>
         /// <exception cref="ArgumentException">Thrown when missing required information</exception>
         /// <exception cref="ForceApiException">Thrown when update fails</exception>
-        public async Task<List<UpdateMultipleResponse>> UpdateRecords(List<SObject> sObjects, bool allOrNone = false, Dictionary<string, string> customHeaders = null)
+        public async Task<List<UpsertResponse>> UpdateRecords(
+            List<SObject> sObjects,
+            bool allOrNone = false,
+            Dictionary<string, string> customHeaders = null,
+            List<string> fieldsToNull = null,
+            bool ignoreNulls = true)
         {
-            if(sObjects == null)
+            if (sObjects == null)
             {
                 throw new ArgumentNullException("sObjects");
             }
 
-            foreach(SObject sObject in sObjects)
+            foreach (SObject sObject in sObjects)
             {
-                if(sObject.Attributes == null || string.IsNullOrEmpty(sObject.Attributes.Type))
+                if (sObject.Attributes == null || string.IsNullOrEmpty(sObject.Attributes.Type))
                 {
                     throw new ForceApiException("Objects are missing Type property in Attributes map");
                 }
@@ -455,12 +657,12 @@ namespace NetCoreForce.Client
 
             var uri = UriFormatter.SObjectsComposite(InstanceUrl, ApiVersion);
 
-            JsonClient client = new JsonClient(AccessToken, _httpClient);
+            JsonClient client = new JsonClient(AccessToken, SharedHttpClient);
 
-            UpdateMultipleRequest updateMultipleRequest = new UpdateMultipleRequest(sObjects, allOrNone);
+            UpsertRequest upsertRequest = new UpsertRequest(sObjects, allOrNone);
 
-            return await client.HttpPatchAsync<List<UpdateMultipleResponse>>(updateMultipleRequest, uri, headers, includeSObjectId: true);
-            
+            return await client.HttpPatchAsync<List<UpsertResponse>>(upsertRequest, uri, headers, includeSObjectId: true, fieldsToNull: fieldsToNull, ignoreNulls: ignoreNulls).ConfigureAwait(false);
+
         }
 
         /// <summary>
@@ -471,9 +673,18 @@ namespace NetCoreForce.Client
         /// <param name="fieldValue">External ID field value</param>
         /// <param name="sObject">Object to update</param>
         /// <param name="customHeaders">Custom headers to include in request (Optional). await The HeaderFormatter helper class can be used to generate the custom header as needed.</param>
-        /// <returns>CreateResponse object, includes new object's ID if record was created and no value if object was updated</returns>
+        /// <param name="fieldsToNull">A list of properties that should be set to null, but inclusing the null values in the serialized output</param>
+        /// <param name="ignoreNulls">Use with caution. By default null values are not serialized, this will serialize all explicitly nulled or missing properties as null</param>
+        /// <returns>UpsertResponse object, includes new object's ID if record was created and no value if object was updated</returns>
         /// <exception cref="ForceApiException">Thrown when request fails</exception>
-        public async Task<CreateResponse> InsertOrUpdateRecord<T>(string sObjectTypeName, string fieldName, string fieldValue, T sObject, Dictionary<string, string> customHeaders = null)
+        public async Task<UpsertResponse> InsertOrUpdateRecord<T>(
+            string sObjectTypeName,
+            string fieldName,
+            string fieldValue,
+            T sObject,
+            Dictionary<string, string> customHeaders = null,
+            List<string> fieldsToNull = null,
+            bool ignoreNulls = true)
         {
             Dictionary<string, string> headers = new Dictionary<string, string>();
 
@@ -489,9 +700,9 @@ namespace NetCoreForce.Client
 
             var uri = UriFormatter.SObjectRowsByExternalId(InstanceUrl, ApiVersion, sObjectTypeName, fieldName, fieldValue);
 
-            JsonClient client = new JsonClient(AccessToken, _httpClient);
+            JsonClient client = new JsonClient(AccessToken, SharedHttpClient);
 
-            return await client.HttpPatchAsync<CreateResponse>(sObject, uri, headers);
+            return await client.HttpPatchAsync<UpsertResponse>(sObject, uri, headers, fieldsToNull: fieldsToNull, ignoreNulls: ignoreNulls).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -506,14 +717,209 @@ namespace NetCoreForce.Client
             Dictionary<string, string> headers = HeaderFormatter.SforceCallOptions(ClientName);
             var uri = UriFormatter.SObjectRows(InstanceUrl, ApiVersion, sObjectTypeName, objectId);
 
-            JsonClient client = new JsonClient(AccessToken, _httpClient);
+            JsonClient client = new JsonClient(AccessToken, SharedHttpClient);
 
-            await client.HttpDeleteAsync<object>(uri, headers);
+            await client.HttpDeleteAsync<object>(uri, headers).ConfigureAwait(false);
 
             return;
         }
 
-#region metadata
+        /// <summary>
+        /// Execute multiple composite records.
+        /// The list can contain up to 200 objects.
+        /// The list can contain objects of different types, including custom objects.
+        /// Each object must contain an attributes map. The map must contain a value for type.
+        /// </summary>
+        /// <param name="sObjects">Objects to update</param>
+        /// <param name="allOrNone">Optional. Indicates whether to roll back the entire request when the update of any object fails (true) or to continue with the independent update of other objects in the request. The default is false.</param>
+        /// <param name="collateSubrequests">Optional. Controls whether the API collates unrelated subrequests to bulkify them (true) or not (false). When subrequests are collated, the processing speed is faster, but the order of execution is not guaranteed (unless there is an explicit dependency between the subrequests).If collation is disabled, then the subrequests are executed in the order in which they are received. The default is true.</param>
+        /// <param name="customHeaders">Custom headers to include in request (Optional). await The HeaderFormatter helper class can be used to generate the custom header as needed.</param>
+        /// <returns>List of UpdateMultipleResponse objects, includes response for each object (id, success, errors)</returns>
+        /// <exception cref="ArgumentException">Thrown when missing required information</exception>
+        /// <exception cref="ForceApiException">Thrown when update fails</exception>
+        public async Task<CompositeRequestResponse> ExecuteCompositeRecords(
+            List<CompositeSObject> sObjects,
+            bool allOrNone = false,
+            bool collateSubrequests = true,
+            Dictionary<string, string> customHeaders = null)
+        {
+            if (sObjects == null)
+            {
+                throw new ArgumentNullException("sObjects");
+            }
+
+            foreach (CompositeSObject s in sObjects)
+            {
+                if (s == null || (string.IsNullOrEmpty(s.Type) && s.CompositeType == CompositeType.SObject))
+                {
+                    throw new ForceApiException("Objects are missing Type property in Attributes map");
+                }
+            }
+
+            Dictionary<string, string> headers = new Dictionary<string, string>();
+
+            //Add call options
+            Dictionary<string, string> callOptions = HeaderFormatter.SforceCallOptions(ClientName);
+            headers.AddRange(callOptions);
+
+            //Add custom headers if specified
+            if (customHeaders != null)
+            {
+                headers.AddRange(customHeaders);
+            }
+
+            var uri = UriFormatter.CompositeRequest(InstanceUrl, ApiVersion);
+
+            JsonClient client = new JsonClient(AccessToken, SharedHttpClient);
+
+            List<CompositeSubRequest> subRequests = sObjects.Select(s =>
+            {
+                return new CompositeSubRequest(
+                    s.SObject,
+                    s.Method == CompositeMethod.Write ? string.IsNullOrWhiteSpace(s.Id) ? "POST" : "PATCH" : s.Method == CompositeMethod.Delete ? "DELETE" : "GET",
+                    s.ReferenceId,
+                    s.CompositeType == CompositeType.SObject ? UriFormatter.CompositeSubRequest(ApiVersion, s.Type, s.Id) : UriFormatter.CompositeSObjectCollectionsSubRequest(ApiVersion)
+                );
+            }).ToList();
+
+            CompositeRequest createMultipleRequest = new CompositeRequest(subRequests, allOrNone, collateSubrequests);
+
+            return await client.HttpPostAsync<CompositeRequestResponse>(createMultipleRequest, uri, headers).ConfigureAwait(false);
+
+        }
+
+        /// <summary>
+        /// Execute request against ApexRest custom endpoints.
+        /// </summary>
+        /// <param name="apexResourceUrl">The URL of the apex resource. Ex: /services/apexrest/DuplicateCheck should provide "DuplicateCheck"</param>
+        /// <param name="request">The custom object to include in the request</param>
+        /// <param name="customHeaders">Custom headers to include in request (Optional). await The HeaderFormatter helper class can be used to generate the custom header as needed.</param>
+        /// <returns>List of UpdateMultipleResponse objects, includes response for each object (id, success, errors)</returns>
+        /// <exception cref="ArgumentException">Thrown when missing required information</exception>
+        /// <exception cref="ForceApiException">Thrown when update fails</exception>
+        public async Task<T> ExecuteApexPost<Request, T>(string apexResourceUrl, Request request, Dictionary<string, string> customHeaders = null)
+        {
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+            if (string.IsNullOrWhiteSpace(apexResourceUrl))
+            {
+                throw new ArgumentNullException(nameof(apexResourceUrl));
+            }
+
+            Dictionary<string, string> headers = new Dictionary<string, string>();
+
+            //Add call options
+            Dictionary<string, string> callOptions = HeaderFormatter.SforceCallOptions(ClientName);
+            headers.AddRange(callOptions);
+
+            //Add custom headers if specified
+            if (customHeaders != null)
+            {
+                headers.AddRange(customHeaders);
+            }
+
+            var uri = UriFormatter.ApexUri(InstanceUrl, apexResourceUrl);
+
+            JsonClient client = new JsonClient(AccessToken, SharedHttpClient);
+
+            return await client.HttpPostAsync<T>(request, uri, headers).ConfigureAwait(false);
+
+        }
+
+        const string blobUrlRegexString = @"^.+sobjects\/(\w+)\/(\w+)\/(\w+)$";
+        /// <summary>
+        /// Retrieve blob data at the specified URL.
+        /// Assumes a relative URL - If a full URL is used, the instance portion will be ignored.
+        /// </summary>
+        /// <param name="blobUrl">relative blob URL</param>
+        /// <returns>binary content stream</returns>
+        public async Task<Stream> BlobRetrieveStream(string blobUrl)
+        {
+            Regex regex = new Regex(blobUrlRegexString);
+            Match match = regex.Match(blobUrl);
+            if (!match.Success)
+            {
+                throw new ForceApiException("Unable to parse blob URL");
+            }
+
+            string sObjectTypeName = match.Groups[1].Value;
+            string objectId = match.Groups[2].Value;
+            string blobField = match.Groups[3].Value;
+
+            return await BlobRetrieveStream(sObjectTypeName, objectId, blobField).ConfigureAwait(false);
+        }
+
+        public async Task<Stream> BlobRetrieveStream(string sObjectTypeName, string objectId, string blobField)
+        {
+            HttpResponseMessage response = await BlobRetrieveResponse(sObjectTypeName, objectId, blobField).ConfigureAwait(false);
+            return await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+        }
+
+        // public async Task<byte[]> BlobRetrieveBytes(string blobUrl)
+        // {
+        //     Regex regex = new Regex(blobUrlRegexString);
+        //     Match match = regex.Match(blobUrl);
+        //     if (!match.Success)
+        //     {
+        //         throw new ForceApiException("Unable to parse blob URL");
+        //     }
+
+        //     string sObjectTypeName = match.Groups[1].Value;
+        //     string objectId = match.Groups[2].Value;
+        //     string blobField = match.Groups[3].Value;
+
+        //     return await BlobRetrieveBytes(sObjectTypeName, objectId, blobField);
+        // }
+
+        // public async Task<byte[]> BlobRetrieveBytes(string sObjectTypeName, string objectId, string blobField)
+        // {
+        //     HttpResponseMessage response = await BlobRetrieveResponse(sObjectTypeName, objectId, blobField);
+        //     return await response.Content.ReadAsByteArrayAsync();
+        // }
+
+        private async Task<HttpResponseMessage> BlobRetrieveResponse(string sObjectTypeName, string objectId, string blobField)
+        {
+            HttpResponseMessage responseMessage = null;
+            try
+            {
+                var uri = UriFormatter.SObjectBlobRetrieve(InstanceUrl, ApiVersion, sObjectTypeName, objectId, blobField);
+
+                var authHeaderValue = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", AccessToken);
+
+                HttpRequestMessage request = new HttpRequestMessage();
+                request.Headers.Authorization = authHeaderValue;
+                request.RequestUri = uri;
+                request.Method = HttpMethod.Get;
+
+                //ResponseHeadersRead = do not buffer binary content immediately to memory
+                HttpCompletionOption completionOption = HttpCompletionOption.ResponseHeadersRead;
+
+                responseMessage = await SharedHttpClient.SendAsync(request, completionOption).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                string errMsg = "Error retrieving blob data:" + ex.Message;
+                if (ex.InnerException != null && !string.IsNullOrEmpty(ex.InnerException.Message))
+                {
+                    errMsg += " " + ex.InnerException.Message;
+                }
+                throw new ForceApiException(errMsg, ex);
+            }
+
+            if (responseMessage.IsSuccessStatusCode)
+                return responseMessage;
+
+            //with ResponseHeadersRead the connection is held until the response is disposed
+            string failureMessage = $"Failed to download blob data, request returned {responseMessage.StatusCode} {responseMessage.ReasonPhrase}";
+            System.Net.HttpStatusCode statusCode = responseMessage.StatusCode;
+            responseMessage.Dispose();
+
+            throw new ForceApiException(failureMessage, new List<ErrorResponse>(), statusCode);
+        }
+
+        #region metadata
 
         /// <summary>
         /// Lists information about limits in your org.
@@ -523,20 +929,20 @@ namespace NetCoreForce.Client
         {
             var uri = UriFormatter.Limits(InstanceUrl, ApiVersion);
 
-            JsonClient client = new JsonClient(AccessToken, _httpClient);
+            JsonClient client = new JsonClient(AccessToken, SharedHttpClient);
 
-            return await client.HttpGetAsync<OrganizationLimits>(uri);
+            return await client.HttpGetAsync<OrganizationLimits>(uri).ConfigureAwait(false);
         }
 
         /// <summary>
         /// List summary information about each REST API version currently available, including the version, label, and a link to each version's root.
-        /// You do not need authentication to retrieve the list of versions. 
+        /// You do not need authentication to retrieve the list of versions.
         /// </summary>
         /// <param name="currentInstanceUrl">Current instance URL. If the client has been initialized, the parameter is optional and the client's current instance URL will be used</param>
         /// <returns>List of SalesforceVersion objects</returns>
         public async Task<List<SalesforceVersion>> GetAvailableRestApiVersions(string currentInstanceUrl = null)
         {
-            return await GetAvailableRestApiVersions(currentInstanceUrl, true);
+            return await GetAvailableRestApiVersions(currentInstanceUrl, true).ConfigureAwait(false);
         }
 
         private async Task<List<SalesforceVersion>> GetAvailableRestApiVersions(string currentInstanceUrl = null, bool deserializeResponse = true)
@@ -558,22 +964,31 @@ namespace NetCoreForce.Client
 
             var uri = UriFormatter.Versions(currentInstanceUrl);
 
-            JsonClient client = new JsonClient(AccessToken, _httpClient);
+            //the Versions resource requires no authentication - don't send the access token, since currentInstanceUrl may not be this client's instance
+            JsonClient client = new JsonClient(null, SharedHttpClient);
 
-            return await client.HttpGetAsync<List<SalesforceVersion>>(uri: uri, deserializeResponse: deserializeResponse);
+            return await client.HttpGetAsync<List<SalesforceVersion>>(uri: uri, deserializeResponse: deserializeResponse).ConfigureAwait(false);
         }
 
         /// <summary>
         /// Get current user's info via Identity URL
         /// <para>https://developer.salesforce.com/docs/atlas.en-us.mobile_sdk.meta/mobile_sdk/oauth_using_identity_urls.htm</para>
         /// </summary>
-        /// <param name="identityUrl"></param>
+        /// <param name="identityUrl">Identity URL, from the Id property of the access token response. The access token is sent to this URL, so it must not come from an untrusted source.</param>
         /// <returns>UserInfo</returns>
+        /// <exception cref="ArgumentException">Thrown when the identity URL is not an absolute HTTPS URL</exception>
         public async Task<UserInfo> GetUserInfo(string identityUrl)
         {
-            JsonClient client = new JsonClient(AccessToken, _httpClient);
+            if (string.IsNullOrEmpty(identityUrl)) throw new ArgumentNullException(nameof(identityUrl));
 
-            return await client.HttpGetAsync<UserInfo>(new Uri(identityUrl));
+            if (!Uri.TryCreate(identityUrl, UriKind.Absolute, out Uri identityUri) || identityUri.Scheme != Uri.UriSchemeHttps)
+            {
+                throw new ArgumentException("Identity URL must be an absolute HTTPS URL", nameof(identityUrl));
+            }
+
+            JsonClient client = new JsonClient(AccessToken, SharedHttpClient);
+
+            return await client.HttpGetAsync<UserInfo>(identityUri).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -587,9 +1002,9 @@ namespace NetCoreForce.Client
             Dictionary<string, string> headers = HeaderFormatter.SforceCallOptions(ClientName);
             var uri = UriFormatter.SObjectBasicInformation(InstanceUrl, ApiVersion, objectTypeName);
 
-            JsonClient client = new JsonClient(AccessToken, _httpClient);
+            JsonClient client = new JsonClient(AccessToken, SharedHttpClient);
 
-            return await client.HttpGetAsync<SObjectBasicInfo>(uri, headers);
+            return await client.HttpGetAsync<SObjectBasicInfo>(uri, headers).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -602,9 +1017,9 @@ namespace NetCoreForce.Client
         {
             var uri = UriFormatter.SObjectDescribe(InstanceUrl, ApiVersion, objectTypeName);
 
-            JsonClient client = new JsonClient(AccessToken, _httpClient);
+            JsonClient client = new JsonClient(AccessToken, SharedHttpClient);
 
-            return await client.HttpGetAsync<SObjectDescribeFull>(uri);
+            return await client.HttpGetAsync<SObjectDescribeFull>(uri).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -616,12 +1031,19 @@ namespace NetCoreForce.Client
         {
             var uri = UriFormatter.DescribeGlobal(InstanceUrl, ApiVersion);
 
-            JsonClient client = new JsonClient(AccessToken, _httpClient);
+            JsonClient client = new JsonClient(AccessToken, SharedHttpClient);
 
-            return await client.HttpGetAsync<DescribeGlobal>(uri);
+            return await client.HttpGetAsync<DescribeGlobal>(uri).ConfigureAwait(false);
         }
 
-#endregion
+        #endregion
 
+        /// <summary>
+        /// Dispose client - does not dispose the HttpClient.
+        /// <para>A caller-supplied HttpClient is owned by the caller, and the shared static HttpClient is left as-is.</para>
+        /// </summary>
+        public void Dispose()
+        {
+        }
     }
 }

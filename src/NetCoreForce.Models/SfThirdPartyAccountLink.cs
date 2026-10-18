@@ -1,4 +1,4 @@
-// SF API version v50.0
+// SF API version v67.0
 // Custom fields included: False
 // Relationship objects included: True
 
@@ -60,7 +60,7 @@ namespace NetCoreForce.Models
 		public SfUser User { get; set; }
 
 		///<summary>
-		/// Auth. Provider ID
+		/// Authentication Provider ID
 		/// <para>Name: SsoProviderId</para>
 		/// <para>SF Type: reference</para>
 		/// <para>Nillable: True</para>

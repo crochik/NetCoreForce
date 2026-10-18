@@ -1,4 +1,4 @@
-// SF API version v50.0
+// SF API version v67.0
 // Custom fields included: False
 // Relationship objects included: True
 
@@ -125,14 +125,6 @@ namespace NetCoreForce.Models
 		///</summary>
 		[JsonProperty(PropertyName = "applicationId")]
 		public string ApplicationId { get; set; }
-
-		///<summary>
-		/// ReferenceTo: ConnectedApplication
-		/// <para>RelationshipName: Application</para>
-		///</summary>
-		[JsonProperty(PropertyName = "application")]
-		[Updateable(false), Createable(false)]
-		public SfConnectedApplication Application { get; set; }
 
 		///<summary>
 		/// Sort Order

@@ -1,26 +1,23 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.props))\build.props" />
   <PropertyGroup>
     <AssemblyName>NetCoreForce.Models</AssemblyName>
     <Product>NetCoreForce.Models</Product>
     <OutputType>Library</OutputType>
     <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
-    <VersionPrefix>$(VersionPrefix)</VersionPrefix>
-    <VersionSuffix>$(VersionSuffix)</VersionSuffix>
+
     <!--NuGet-->
-    <Authors>$(Authors)</Authors>
-    <Copyright>$(Copyright)</Copyright>
-    <Description>NetCoreForce standard obect models package</Description>
+    <Title>NetCoreForce Salesforce Object Models</Title>
+    <Description>Strongly typed C# models for standard Salesforce objects (Account, Contact, Opportunity, Case and more) for use with NetCoreForce.Client.</Description>
+    <PackageTags>$(PackageTags);models;sobjects</PackageTags>
     <IsPackable>true</IsPackable>
     <PackageId>NetCoreForce.Models</PackageId>
-    <PackageLicenseExpression>$(PackageLicenseExpression)</PackageLicenseExpression>
-    <PackageProjectUrl>$(PackageProjectUrl)</PackageProjectUrl>
-    <PackageRequireLicenseAcceptance>$(PackageRequireLicenseAcceptance)</PackageRequireLicenseAcceptance>
-    <PackageTags>$(PackageTags)</PackageTags>
-    <RepositoryType>$(RepositoryType)</RepositoryType>
-    <RepositoryUrl>$(RepositoryUrl)</RepositoryUrl>
-    <PackageReleaseNotes>$(PackageReleaseNotes)</PackageReleaseNotes>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
   <PropertyGroup>
     <!-- Documentation -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -29,14 +26,13 @@
     <!-- warning CS1587: XML comment is not placed on a valid language element -->
     <NoWarn>CS1591,CS1587</NoWarn>
   </PropertyGroup>
+
   <!-- <PropertyGroup Condition="'$(Configuration)'=='Release'">
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageOutputPath>$(SolutionDir)/packages</PackageOutputPath>
   </PropertyGroup> -->
+
   <ItemGroup>
     <ProjectReference Include="..\NetCoreForce.Client\NetCoreForce.Client.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 </Project>

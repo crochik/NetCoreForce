@@ -32,12 +32,12 @@ namespace NetCoreForce.Client.Tests
         }
 
         [Fact]
-        public async void ObjectById()
+        public async Task ObjectById()
         {
             ForceClient client = CreateMockClient(
                 "https://na15.salesforce.com",
-                "v41.0",
-                "https://na15.salesforce.com/services/data/v41.0/sobjects/Account/001i000002C8QTIAA3",
+                "v57.0",
+                "https://na15.salesforce.com/services/data/v57.0/sobjects/Account/001i000002C8QTIAA3",
                 "account.json",
                 HttpStatusCode.OK);
 
@@ -52,12 +52,12 @@ namespace NetCoreForce.Client.Tests
         }
 
         [Fact]
-        public async void QueryNestedObjects()
+        public async Task QueryNestedObjects()
         {
             ForceClient client = CreateMockClient(
                 "https://na15.salesforce.com",
-                "v41.0",
-                "https://na15.salesforce.com/services/data/v41.0/query?q=SELECT%20Id,CaseNumber,SystemModstamp,Account.Name,Account.SystemModstamp,Contact.Name,Contact.SystemModstamp%20FROM%20Case",
+                "v57.0",
+                "https://na15.salesforce.com/services/data/v57.0/query?q=SELECT%20Id,CaseNumber,SystemModstamp,Account.Name,Account.SystemModstamp,Contact.Name,Contact.SystemModstamp%20FROM%20Case",
                 "query_case_result.json",
                 HttpStatusCode.OK);
 
@@ -73,12 +73,12 @@ namespace NetCoreForce.Client.Tests
         }
 
         [Fact]
-        public async void QueryNoResults()
+        public async Task QueryNoResults()
         {
             ForceClient client = CreateMockClient(
                 "https://na15.salesforce.com",
-                "v41.0",
-                "https://na15.salesforce.com/services/data/v41.0/query?q=SELECT%20Id%20FROM%20Case",
+                "v57.0",
+                "https://na15.salesforce.com/services/data/v57.0/query?q=SELECT%20Id%20FROM%20Case",
                 "query_empty_result.json",
                 HttpStatusCode.OK);
 
@@ -89,12 +89,12 @@ namespace NetCoreForce.Client.Tests
         }
 
         [Fact]
-        public async void QuerySingleObject()
+        public async Task QuerySingleObject()
         {
             ForceClient client = CreateMockClient(
                 "https://na15.salesforce.com",
-                "v41.0",
-                "https://na15.salesforce.com/services/data/v41.0/query?q=SELECT%20Id,CaseNumber,SystemModstamp,Account.Name,Account.SystemModstamp,Contact.Name,Contact.SystemModstamp%20FROM%20Case%20WHERE%20CaseNumber%20%3D%20%2700001000%27",
+                "v57.0",
+                "https://na15.salesforce.com/services/data/v57.0/query?q=SELECT%20Id,CaseNumber,SystemModstamp,Account.Name,Account.SystemModstamp,Contact.Name,Contact.SystemModstamp%20FROM%20Case%20WHERE%20CaseNumber%20%3D%20%2700001000%27",
                 "query_case_single_result.json",
                 HttpStatusCode.OK);
 
@@ -107,12 +107,12 @@ namespace NetCoreForce.Client.Tests
         }
 
         [Fact]
-        public async void QuerySingleObjectFail()
+        public async Task QuerySingleObjectFail()
         {
             ForceClient client = CreateMockClient(
                 "https://na15.salesforce.com",
-                "v41.0",
-                "https://na15.salesforce.com/services/data/v41.0/query?q=SELECT%20Id,CaseNumber,SystemModstamp,Account.Name,Account.SystemModstamp,Contact.Name,Contact.SystemModstamp%20FROM%20Case%20WHERE%20CaseNumber%20LIKE%20%270000%25%27",
+                "v57.0",
+                "https://na15.salesforce.com/services/data/v57.0/query?q=SELECT%20Id,CaseNumber,SystemModstamp,Account.Name,Account.SystemModstamp,Contact.Name,Contact.SystemModstamp%20FROM%20Case%20WHERE%20CaseNumber%20LIKE%20%270000%25%27",
                 "query_case_result.json",
                 HttpStatusCode.OK);
 
@@ -124,12 +124,12 @@ namespace NetCoreForce.Client.Tests
         }
 
         [Fact]
-        public async void QuerySingleObjectNoResults()
+        public async Task QuerySingleObjectNoResults()
         {
             ForceClient client = CreateMockClient(
                 "https://na15.salesforce.com",
-                "v41.0",
-                "https://na15.salesforce.com/services/data/v41.0/query?q=SELECT%20Id%20FROM%20Case%20WHERE%20CaseNumber%20LIKE%20%270000%25%27",
+                "v57.0",
+                "https://na15.salesforce.com/services/data/v57.0/query?q=SELECT%20Id%20FROM%20Case%20WHERE%20CaseNumber%20LIKE%20%270000%25%27",
                 "query_empty_result.json",
                 HttpStatusCode.OK);
 
@@ -139,12 +139,12 @@ namespace NetCoreForce.Client.Tests
         }
 
         [Fact]
-        public async void CountQuery()
+        public async Task CountQuery()
         {
             ForceClient client = CreateMockClient(
                 "https://na15.salesforce.com",
-                "v41.0",
-                "https://na15.salesforce.com/services/data/v41.0/query?q=SELECT%20COUNT()%20FROM%20Case",
+                "v57.0",
+                "https://na15.salesforce.com/services/data/v57.0/query?q=SELECT%20COUNT()%20FROM%20Case",
                 "count_query.json",
                 HttpStatusCode.OK);
 

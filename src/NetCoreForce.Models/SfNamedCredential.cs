@@ -1,4 +1,4 @@
-// SF API version v50.0
+// SF API version v67.0
 // Custom fields included: False
 // Relationship objects included: True
 
@@ -162,7 +162,7 @@ namespace NetCoreForce.Models
 		/// Identity Type
 		/// <para>Name: PrincipalType</para>
 		/// <para>SF Type: picklist</para>
-		/// <para>Nillable: False</para>
+		/// <para>Nillable: True</para>
 		///</summary>
 		[JsonProperty(PropertyName = "principalType")]
 		[Updateable(false), Createable(false)]
@@ -199,7 +199,7 @@ namespace NetCoreForce.Models
 		public bool? CalloutOptionsAllowMergeFieldsInBody { get; set; }
 
 		///<summary>
-		/// Auth. Provider ID
+		/// Authentication Provider ID
 		/// <para>Name: AuthProviderId</para>
 		/// <para>SF Type: reference</para>
 		/// <para>Nillable: True</para>
@@ -215,6 +215,16 @@ namespace NetCoreForce.Models
 		[JsonProperty(PropertyName = "authProvider")]
 		[Updateable(false), Createable(false)]
 		public SfAuthProvider AuthProvider { get; set; }
+
+		///<summary>
+		/// Description
+		/// <para>Name: Description</para>
+		/// <para>SF Type: string</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "description")]
+		[Updateable(false), Createable(false)]
+		public string Description { get; set; }
 
 		///<summary>
 		/// JWT Issuer

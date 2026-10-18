@@ -1,4 +1,4 @@
-// SF API version v50.0
+// SF API version v67.0
 // Custom fields included: False
 // Relationship objects included: True
 
@@ -10,7 +10,7 @@ using Newtonsoft.Json;
 namespace NetCoreForce.Models
 {
 	///<summary>
-	/// Apex Test Result
+	/// Application Test Result
 	///<para>SObject Name: ApexTestResult</para>
 	///<para>Custom Object: False</para>
 	///</summary>
@@ -23,7 +23,7 @@ namespace NetCoreForce.Models
 		}
 
 		///<summary>
-		/// Apex Test Result ID
+		/// Application Test Result ID
 		/// <para>Name: Id</para>
 		/// <para>SF Type: id</para>
 		/// <para>Nillable: False</para>
@@ -64,7 +64,7 @@ namespace NetCoreForce.Models
 		/// Class ID
 		/// <para>Name: ApexClassId</para>
 		/// <para>SF Type: reference</para>
-		/// <para>Nillable: False</para>
+		/// <para>Nillable: True</para>
 		///</summary>
 		[JsonProperty(PropertyName = "apexClassId")]
 		public string ApexClassId { get; set; }
@@ -156,7 +156,7 @@ namespace NetCoreForce.Models
 		public SfApexLog ApexLog { get; set; }
 
 		///<summary>
-		/// ApexTestRunResult ID
+		/// Apex Test Run Result ID
 		/// <para>Name: ApexTestRunResultId</para>
 		/// <para>SF Type: reference</para>
 		/// <para>Nillable: True</para>
@@ -180,6 +180,43 @@ namespace NetCoreForce.Models
 		///</summary>
 		[JsonProperty(PropertyName = "runTime")]
 		public int? RunTime { get; set; }
+
+		///<summary>
+		/// Is Test Setup
+		/// <para>Name: IsTestSetup</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "isTestSetup")]
+		public bool? IsTestSetup { get; set; }
+
+		///<summary>
+		/// Dynamic test class namespace
+		/// <para>Name: TestNamespace</para>
+		/// <para>SF Type: string</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "testNamespace")]
+		public string TestNamespace { get; set; }
+
+		///<summary>
+		/// Test Category
+		/// <para>Name: TestCategory</para>
+		/// <para>SF Type: string</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "testCategory")]
+		[Updateable(false), Createable(false)]
+		public string TestCategory { get; set; }
+
+		///<summary>
+		/// Dynamic test class name
+		/// <para>Name: TestName</para>
+		/// <para>SF Type: string</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "testName")]
+		public string TestName { get; set; }
 
 	}
 }

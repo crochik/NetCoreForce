@@ -1,4 +1,4 @@
-// SF API version v50.0
+// SF API version v67.0
 // Custom fields included: False
 // Relationship objects included: True
 
@@ -52,7 +52,7 @@ namespace NetCoreForce.Models
 		public bool? IsRegistrationEnabled { get; set; }
 
 		///<summary>
-		/// Secure Url
+		/// Secure URL
 		/// <para>Name: SecureUrl</para>
 		/// <para>SF Type: url</para>
 		/// <para>Nillable: True</para>

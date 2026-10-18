@@ -1,4 +1,4 @@
-// SF API version v50.0
+// SF API version v67.0
 // Custom fields included: False
 // Relationship objects included: True
 
@@ -99,6 +99,16 @@ namespace NetCoreForce.Models
 		public DateTimeOffset? SystemModstamp { get; set; }
 
 		///<summary>
+		/// Status
+		/// <para>Name: IsVerified</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "isVerified")]
+		[Updateable(false), Createable(true)]
+		public bool? IsVerified { get; set; }
+
+		///<summary>
 		/// Email Address
 		/// <para>Name: Address</para>
 		/// <para>SF Type: email</para>
@@ -124,6 +134,15 @@ namespace NetCoreForce.Models
 		///</summary>
 		[JsonProperty(PropertyName = "isAllowAllProfiles")]
 		public bool? IsAllowAllProfiles { get; set; }
+
+		///<summary>
+		/// Purpose
+		/// <para>Name: Purpose</para>
+		/// <para>SF Type: picklist</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "purpose")]
+		public string Purpose { get; set; }
 
 	}
 }

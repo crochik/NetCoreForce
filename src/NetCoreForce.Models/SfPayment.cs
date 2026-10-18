@@ -1,4 +1,4 @@
-// SF API version v50.0
+// SF API version v67.0
 // Custom fields included: False
 // Relationship objects included: True
 
@@ -265,7 +265,7 @@ namespace NetCoreForce.Models
 		public string ClientContext { get; set; }
 
 		///<summary>
-		/// Gateway ResultCode
+		/// Gateway Result Code
 		/// <para>Name: GatewayResultCode</para>
 		/// <para>SF Type: string</para>
 		/// <para>Nillable: True</para>
@@ -274,7 +274,7 @@ namespace NetCoreForce.Models
 		public string GatewayResultCode { get; set; }
 
 		///<summary>
-		/// Salesforce ResultCode
+		/// Salesforce Result Code
 		/// <para>Name: SfResultCode</para>
 		/// <para>SF Type: picklist</para>
 		/// <para>Nillable: True</para>
@@ -301,7 +301,7 @@ namespace NetCoreForce.Models
 		public string CancellationGatewayRefNumber { get; set; }
 
 		///<summary>
-		/// Cancellation Gateway ResultCode
+		/// Cancellation Gateway Result Code
 		/// <para>Name: CancellationGatewayResultCode</para>
 		/// <para>SF Type: string</para>
 		/// <para>Nillable: True</para>
@@ -310,7 +310,7 @@ namespace NetCoreForce.Models
 		public string CancellationGatewayResultCode { get; set; }
 
 		///<summary>
-		/// Cancellation Salesforce ResultCode
+		/// Cancellation Salesforce Result Code
 		/// <para>Name: CancellationSfResultCode</para>
 		/// <para>SF Type: string</para>
 		/// <para>Nillable: True</para>
@@ -365,7 +365,7 @@ namespace NetCoreForce.Models
 		public DateTimeOffset? CancellationEffectiveDate { get; set; }
 
 		///<summary>
-		/// Gateway ResultCode Description
+		/// Gateway Result Code Description
 		/// <para>Name: GatewayResultCodeDescription</para>
 		/// <para>SF Type: string</para>
 		/// <para>Nillable: True</para>
@@ -521,6 +521,46 @@ namespace NetCoreForce.Models
 		[JsonProperty(PropertyName = "netRefundApplied")]
 		[Updateable(false), Createable(false)]
 		public decimal? NetRefundApplied { get; set; }
+
+		///<summary>
+		/// Payment Intent Guid
+		/// <para>Name: PaymentIntentGuid</para>
+		/// <para>SF Type: string</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "paymentIntentGuid")]
+		[Updateable(false), Createable(true)]
+		public string PaymentIntentGuid { get; set; }
+
+		///<summary>
+		/// Total Payment Credit Applied
+		/// <para>Name: TotalPaymentCreditApplied</para>
+		/// <para>SF Type: currency</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "totalPaymentCreditApplied")]
+		[Updateable(false), Createable(false)]
+		public decimal? TotalPaymentCreditApplied { get; set; }
+
+		///<summary>
+		/// Total Payment Credit Unapplied
+		/// <para>Name: TotalPaymentCreditUnapplied</para>
+		/// <para>SF Type: currency</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "totalPaymentCreditUnapplied")]
+		[Updateable(false), Createable(false)]
+		public decimal? TotalPaymentCreditUnapplied { get; set; }
+
+		///<summary>
+		/// Net Payment Credit Applied
+		/// <para>Name: NetPaymentCreditApplied</para>
+		/// <para>SF Type: currency</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "netPaymentCreditApplied")]
+		[Updateable(false), Createable(false)]
+		public decimal? NetPaymentCreditApplied { get; set; }
 
 	}
 }

@@ -1,4 +1,4 @@
-// SF API version v50.0
+// SF API version v67.0
 // Custom fields included: False
 // Relationship objects included: True
 
@@ -306,7 +306,7 @@ namespace NetCoreForce.Models
 		public double? PaymentMethodLongitude { get; set; }
 
 		///<summary>
-		/// GeoCode Accuracy
+		/// Geo Code Accuracy
 		/// <para>Name: PaymentMethodGeocodeAccuracy</para>
 		/// <para>SF Type: picklist</para>
 		/// <para>Nillable: True</para>
@@ -427,7 +427,7 @@ namespace NetCoreForce.Models
 		public string CompanyName { get; set; }
 
 		///<summary>
-		/// GatewayToken
+		/// Gateway Token
 		/// <para>Name: GatewayToken</para>
 		/// <para>SF Type: string</para>
 		/// <para>Nillable: True</para>
@@ -543,6 +543,53 @@ namespace NetCoreForce.Models
 		///</summary>
 		[JsonProperty(PropertyName = "gatewayDate")]
 		public DateTimeOffset? GatewayDate { get; set; }
+
+		///<summary>
+		/// Gateway Token Encrypted
+		/// <para>Name: GatewayTokenEncrypted</para>
+		/// <para>SF Type: encryptedstring</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "gatewayTokenEncrypted")]
+		public string GatewayTokenEncrypted { get; set; }
+
+		///<summary>
+		/// Auto Pay
+		/// <para>Name: IsAutoPayEnabled</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "isAutoPayEnabled")]
+		public bool? IsAutoPayEnabled { get; set; }
+
+		///<summary>
+		/// Payment Method Type
+		/// <para>Name: PaymentMethodType</para>
+		/// <para>SF Type: picklist</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "paymentMethodType")]
+		public string PaymentMethodType { get; set; }
+
+		///<summary>
+		/// Payment Method Sub Type
+		/// <para>Name: PaymentMethodSubType</para>
+		/// <para>SF Type: string</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "paymentMethodSubType")]
+		[Updateable(false), Createable(true)]
+		public string PaymentMethodSubType { get; set; }
+
+		///<summary>
+		/// Payment Method Details
+		/// <para>Name: PaymentMethodDetails</para>
+		/// <para>SF Type: string</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "paymentMethodDetails")]
+		[Updateable(false), Createable(true)]
+		public string PaymentMethodDetails { get; set; }
 
 	}
 }

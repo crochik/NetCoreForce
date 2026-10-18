@@ -1,4 +1,4 @@
-// SF API version v50.0
+// SF API version v67.0
 // Custom fields included: False
 // Relationship objects included: True
 
@@ -129,7 +129,7 @@ namespace NetCoreForce.Models
 		public double? Probability { get; set; }
 
 		///<summary>
-		/// To ForecastCategory
+		/// To Forecast Category
 		/// <para>Name: ForecastCategory</para>
 		/// <para>SF Type: picklist</para>
 		/// <para>Nillable: True</para>

@@ -1,15 +1,29 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.props))\build.props" />
-  <PropertyGroup>    
+  <PropertyGroup>
     <TargetFrameworks>$(TestTargetFrameworks)</TargetFrameworks>
-    <LangVersion>$(LangVersion)</LangVersion>
     <IsPackable>false</IsPackable>
+    <UseXunitV3 Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0')) OR $([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net472'))">true</UseXunitV3>
   </PropertyGroup>
 
+  <!-- xUnit v3 for .NET 8+ and .NET Framework 4.7.2+ - v3 test projects must be executables. -->
+  <PropertyGroup Condition=" '$(UseXunitV3)' == 'true' ">
+    <OutputType>Exe</OutputType>
+    <DefineConstants>$(DefineConstants);XUNIT_V3</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup Condition=" '$(UseXunitV3)' == 'true' ">
+    <PackageReference Include="xunit.v3" Version="3.2.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
+  </ItemGroup>
+
+  <!-- xUnit v2 for .NET Framework 4.6.2, which xUnit v3 does not support -->
+  <ItemGroup Condition=" '$(UseXunitV3)' != 'true' ">
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.8.3" />
-    <PackageReference Include="xunit" Version="2.4.1" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -18,7 +32,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\NetCoreForce.Client\NetCoreForce.Client.csproj" />
-    <ProjectReference Include="..\NetCoreForce.Linq\NetCoreForce.Linq.csproj" />
     <ProjectReference Include="..\NetCoreForce.Models\NetCoreForce.Models.csproj" />
   </ItemGroup>
 

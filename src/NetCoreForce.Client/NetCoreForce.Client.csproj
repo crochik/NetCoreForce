@@ -1,26 +1,27 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.props))\build.props" />
   <PropertyGroup>
     <AssemblyName>NetCoreForce.Client</AssemblyName>
     <Product>NetCoreForce.Client</Product>
     <OutputType>Library</OutputType>
     <TargetFrameworks>$(LibTargetFrameworks)</TargetFrameworks>
-    <VersionPrefix>$(VersionPrefix)</VersionPrefix>
-    <VersionSuffix>$(VersionSuffix)</VersionSuffix>
+
     <!--NuGet-->
-    <Authors>$(Authors)</Authors>
-    <Copyright>$(Copyright)</Copyright>
-    <Description>A .NET Standard and .NET Core Salesforce REST API toolkit and API wrapper</Description>
+    <Title>NetCoreForce Salesforce REST API Client</Title>
+    <Description>Salesforce REST API client library for .NET and C#. OAuth 2.0 login (Client Credentials, Web Server, refresh token), SOQL and SOSL queries, CRUD and upsert, composite requests, and file downloads. Supports .NET 8-10, .NET Standard 2.0/2.1 and .NET Framework 4.6.2+.</Description>
+    <PackageTags>$(PackageTags);soql;sosl;oauth</PackageTags>
     <IsPackable>true</IsPackable>
     <PackageId>NetCoreForce.Client</PackageId>
-    <PackageLicenseExpression>$(PackageLicenseExpression)</PackageLicenseExpression>
-    <PackageProjectUrl>$(PackageProjectUrl)</PackageProjectUrl>
-    <PackageRequireLicenseAcceptance>$(PackageRequireLicenseAcceptance)</PackageRequireLicenseAcceptance>
-    <PackageTags>$(PackageTags)</PackageTags>
-    <RepositoryType>$(RepositoryType)</RepositoryType>
-    <RepositoryUrl>$(RepositoryUrl)</RepositoryUrl>
-    <PackageReleaseNotes>$(PackageReleaseNotes)</PackageReleaseNotes>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="NetCoreForce.Client.Tests" />
+  </ItemGroup>
+
   <PropertyGroup>
     <!-- Documentation -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -28,16 +29,29 @@
     <!-- warning CS1591: Missing XML comment for publicly visible type or member -->
     <NoWarn>CS1591</NoWarn>
   </PropertyGroup>
+
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageOutputPath>$(SolutionDir)/packages</PackageOutputPath>
   </PropertyGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' or '$(TargetFramework)' == 'net461' ">
-    <!-- Adds async support for .netstandard2.0 clients -->
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="6.0.0" />
+
+  <!-- Adds async support for .NET Standard 2.0, .NET Framework, and .NET Core < 3.0 -->
+  <ItemGroup Condition=" $(TargetFramework) == 'netstandard2.0' OR $(TargetFramework.StartsWith('net4')) ">
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.6" />
   </ItemGroup>
+
+  <!-- kept even though .NET Framework provides System.Net.Http: consuming projects may rely on this package flowing to them -->
+  <ItemGroup Condition=" $(TargetFramework.StartsWith('net4')) ">
+    <PackageReference Include="System.Net.Http" Version="4.3.4" />
+  </ItemGroup>
+
+  <!-- part of the shared framework on .NET 8+, so only referenced where it isn't - on .NET 8+ the serviced framework copy is used -->
+  <ItemGroup Condition=" $(TargetFramework.StartsWith('netstandard')) OR $(TargetFramework.StartsWith('net4')) ">
+    <PackageReference Include="System.Text.Encodings.Web" Version="9.0.6" />
+  </ItemGroup>
+
   <ItemGroup>
-    <PackageReference Include="System.Text.Encodings.Web" Version="10.0.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
+
 </Project>

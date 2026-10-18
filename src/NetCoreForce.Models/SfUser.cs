@@ -1,4 +1,4 @@
-// SF API version v50.0
+// SF API version v67.0
 // Custom fields included: False
 // Relationship objects included: True
 
@@ -431,6 +431,24 @@ namespace NetCoreForce.Models
 		public string UserType { get; set; }
 
 		///<summary>
+		/// Start of Day
+		/// <para>Name: StartDay</para>
+		/// <para>SF Type: picklist</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "startDay")]
+		public string StartDay { get; set; }
+
+		///<summary>
+		/// End of Day
+		/// <para>Name: EndDay</para>
+		/// <para>SF Type: picklist</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "endDay")]
+		public string EndDay { get; set; }
+
+		///<summary>
 		/// Language
 		/// <para>Name: LanguageLocaleKey</para>
 		/// <para>SF Type: picklist</para>
@@ -561,6 +579,16 @@ namespace NetCoreForce.Models
 		public DateTimeOffset? SystemModstamp { get; set; }
 
 		///<summary>
+		/// Password Expiration Date
+		/// <para>Name: PasswordExpirationDate</para>
+		/// <para>SF Type: datetime</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "passwordExpirationDate")]
+		[Updateable(false), Createable(false)]
+		public DateTimeOffset? PasswordExpirationDate { get; set; }
+
+		///<summary>
 		/// Failed Login Attempts
 		/// <para>Name: NumberOfFailedLogins</para>
 		/// <para>SF Type: int</para>
@@ -569,6 +597,16 @@ namespace NetCoreForce.Models
 		[JsonProperty(PropertyName = "numberOfFailedLogins")]
 		[Updateable(false), Createable(false)]
 		public int? NumberOfFailedLogins { get; set; }
+
+		///<summary>
+		/// SU Access Expiration Date
+		/// <para>Name: SuAccessExpirationDate</para>
+		/// <para>SF Type: date</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "suAccessExpirationDate")]
+		[Updateable(false), Createable(false)]
+		public DateTime? SuAccessExpirationDate { get; set; }
 
 		///<summary>
 		/// Offline Edition Trial Expiration Date
@@ -924,13 +962,13 @@ namespace NetCoreForce.Models
 		public bool? UserPreferencesDisableMessageEmail { get; set; }
 
 		///<summary>
-		/// HideLegacyRetirementModal
-		/// <para>Name: UserPreferencesHideLegacyRetirementModal</para>
+		/// DismissRecordChannelsSuggestedObjects
+		/// <para>Name: UserPreferencesDismissRecordChannelsSuggestedObjects</para>
 		/// <para>SF Type: boolean</para>
 		/// <para>Nillable: False</para>
 		///</summary>
-		[JsonProperty(PropertyName = "userPreferencesHideLegacyRetirementModal")]
-		public bool? UserPreferencesHideLegacyRetirementModal { get; set; }
+		[JsonProperty(PropertyName = "userPreferencesDismissRecordChannelsSuggestedObjects")]
+		public bool? UserPreferencesDismissRecordChannelsSuggestedObjects { get; set; }
 
 		///<summary>
 		/// JigsawListUser
@@ -960,6 +998,24 @@ namespace NetCoreForce.Models
 		public bool? UserPreferencesDisableSharePostEmail { get; set; }
 
 		///<summary>
+		/// ActionLauncherEinsteinGptConsent
+		/// <para>Name: UserPreferencesActionLauncherEinsteinGptConsent</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "userPreferencesActionLauncherEinsteinGptConsent")]
+		public bool? UserPreferencesActionLauncherEinsteinGptConsent { get; set; }
+
+		///<summary>
+		/// AssistiveActionsEnabledInActionLauncher
+		/// <para>Name: UserPreferencesAssistiveActionsEnabledInActionLauncher</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "userPreferencesAssistiveActionsEnabledInActionLauncher")]
+		public bool? UserPreferencesAssistiveActionsEnabledInActionLauncher { get; set; }
+
+		///<summary>
 		/// EnableAutoSubForFeeds
 		/// <para>Name: UserPreferencesEnableAutoSubForFeeds</para>
 		/// <para>SF Type: boolean</para>
@@ -976,6 +1032,15 @@ namespace NetCoreForce.Models
 		///</summary>
 		[JsonProperty(PropertyName = "userPreferencesDisableFileShareNotificationsForApi")]
 		public bool? UserPreferencesDisableFileShareNotificationsForApi { get; set; }
+
+		///<summary>
+		/// EnableLwrLexPilot
+		/// <para>Name: UserPreferencesEnableLwrLexPilot</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "userPreferencesEnableLwrLexPilot")]
+		public bool? UserPreferencesEnableLwrLexPilot { get; set; }
 
 		///<summary>
 		/// ShowTitleToExternalUsers
@@ -1131,22 +1196,22 @@ namespace NetCoreForce.Models
 		public bool? UserPreferencesShowCountryToGuestUsers { get; set; }
 
 		///<summary>
-		/// DisableFeedbackEmail
-		/// <para>Name: UserPreferencesDisableFeedbackEmail</para>
+		/// ShowForecastingChangeSignals
+		/// <para>Name: UserPreferencesShowForecastingChangeSignals</para>
 		/// <para>SF Type: boolean</para>
 		/// <para>Nillable: False</para>
 		///</summary>
-		[JsonProperty(PropertyName = "userPreferencesDisableFeedbackEmail")]
-		public bool? UserPreferencesDisableFeedbackEmail { get; set; }
+		[JsonProperty(PropertyName = "userPreferencesShowForecastingChangeSignals")]
+		public bool? UserPreferencesShowForecastingChangeSignals { get; set; }
 
 		///<summary>
-		/// DisableWorkEmail
-		/// <para>Name: UserPreferencesDisableWorkEmail</para>
+		/// LiveAgentMiawSetupDeflection
+		/// <para>Name: UserPreferencesLiveAgentMiawSetupDeflection</para>
 		/// <para>SF Type: boolean</para>
 		/// <para>Nillable: False</para>
 		///</summary>
-		[JsonProperty(PropertyName = "userPreferencesDisableWorkEmail")]
-		public bool? UserPreferencesDisableWorkEmail { get; set; }
+		[JsonProperty(PropertyName = "userPreferencesLiveAgentMiawSetupDeflection")]
+		public bool? UserPreferencesLiveAgentMiawSetupDeflection { get; set; }
 
 		///<summary>
 		/// HideS1BrowserUI
@@ -1428,6 +1493,51 @@ namespace NetCoreForce.Models
 		public bool? UserPreferencesNewLightningReportRunPageEnabled { get; set; }
 
 		///<summary>
+		/// ReverseOpenActivitiesView
+		/// <para>Name: UserPreferencesReverseOpenActivitiesView</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "userPreferencesReverseOpenActivitiesView")]
+		public bool? UserPreferencesReverseOpenActivitiesView { get; set; }
+
+		///<summary>
+		/// HasSentWarningEmail
+		/// <para>Name: UserPreferencesHasSentWarningEmail</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "userPreferencesHasSentWarningEmail")]
+		public bool? UserPreferencesHasSentWarningEmail { get; set; }
+
+		///<summary>
+		/// HasSentWarningEmail238
+		/// <para>Name: UserPreferencesHasSentWarningEmail238</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "userPreferencesHasSentWarningEmail238")]
+		public bool? UserPreferencesHasSentWarningEmail238 { get; set; }
+
+		///<summary>
+		/// HasSentWarningEmail240
+		/// <para>Name: UserPreferencesHasSentWarningEmail240</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "userPreferencesHasSentWarningEmail240")]
+		public bool? UserPreferencesHasSentWarningEmail240 { get; set; }
+
+		///<summary>
+		/// DismissPersonalSpaceLegalMessage
+		/// <para>Name: UserPreferencesDismissPersonalSpaceLegalMessage</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "userPreferencesDismissPersonalSpaceLegalMessage")]
+		public bool? UserPreferencesDismissPersonalSpaceLegalMessage { get; set; }
+
+		///<summary>
 		/// NativeEmailClient
 		/// <para>Name: UserPreferencesNativeEmailClient</para>
 		/// <para>SF Type: boolean</para>
@@ -1435,6 +1545,53 @@ namespace NetCoreForce.Models
 		///</summary>
 		[JsonProperty(PropertyName = "userPreferencesNativeEmailClient")]
 		public bool? UserPreferencesNativeEmailClient { get; set; }
+
+		///<summary>
+		/// DismissReuseUpdateReminderModal
+		/// <para>Name: UserPreferencesDismissReuseUpdateReminderModal</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "userPreferencesDismissReuseUpdateReminderModal")]
+		public bool? UserPreferencesDismissReuseUpdateReminderModal { get; set; }
+
+		///<summary>
+		/// HideManagedEcaMobilePubModal
+		/// <para>Name: UserPreferencesHideManagedEcaMobilePubModal</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "userPreferencesHideManagedEcaMobilePubModal")]
+		public bool? UserPreferencesHideManagedEcaMobilePubModal { get; set; }
+
+		///<summary>
+		/// ShowForecastingRoundedAmounts
+		/// <para>Name: UserPreferencesShowForecastingRoundedAmounts</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "userPreferencesShowForecastingRoundedAmounts")]
+		public bool? UserPreferencesShowForecastingRoundedAmounts { get; set; }
+
+		///<summary>
+		/// User Verified Mobile Number
+		/// <para>Name: HasUserVerifiedPhone</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "hasUserVerifiedPhone")]
+		[Updateable(false), Createable(false)]
+		public bool? HasUserVerifiedPhone { get; set; }
+
+		///<summary>
+		/// User Verified Email
+		/// <para>Name: HasUserVerifiedEmail</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "hasUserVerifiedEmail")]
+		[Updateable(false), Createable(false)]
+		public bool? HasUserVerifiedEmail { get; set; }
 
 		///<summary>
 		/// Contact ID
@@ -1548,7 +1705,7 @@ namespace NetCoreForce.Models
 		public string OutOfOfficeMessage { get; set; }
 
 		///<summary>
-		/// Url for medium profile photo
+		/// URL for medium profile photo
 		/// <para>Name: MediumPhotoUrl</para>
 		/// <para>SF Type: url</para>
 		/// <para>Nillable: True</para>
@@ -1605,7 +1762,7 @@ namespace NetCoreForce.Models
 		public DateTimeOffset? LastReferencedDate { get; set; }
 
 		///<summary>
-		/// Url for banner photo
+		/// URL for banner photo
 		/// <para>Name: BannerPhotoUrl</para>
 		/// <para>SF Type: url</para>
 		/// <para>Nillable: True</para>
@@ -1615,7 +1772,7 @@ namespace NetCoreForce.Models
 		public string BannerPhotoUrl { get; set; }
 
 		///<summary>
-		/// Url for IOS banner photo
+		/// URL for IOS banner photo
 		/// <para>Name: SmallBannerPhotoUrl</para>
 		/// <para>SF Type: url</para>
 		/// <para>Nillable: True</para>
@@ -1625,7 +1782,7 @@ namespace NetCoreForce.Models
 		public string SmallBannerPhotoUrl { get; set; }
 
 		///<summary>
-		/// Url for Android banner photo
+		/// URL for Android banner photo
 		/// <para>Name: MediumBannerPhotoUrl</para>
 		/// <para>SF Type: url</para>
 		/// <para>Nillable: True</para>

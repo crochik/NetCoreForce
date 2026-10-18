@@ -1,4 +1,4 @@
-// SF API version v50.0
+// SF API version v67.0
 // Custom fields included: False
 // Relationship objects included: True
 
@@ -111,6 +111,16 @@ namespace NetCoreForce.Models
 		public string LoginType { get; set; }
 
 		///<summary>
+		/// Login Subtype
+		/// <para>Name: LoginSubType</para>
+		/// <para>SF Type: picklist</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "loginSubType")]
+		[Updateable(false), Createable(false)]
+		public string LoginSubType { get; set; }
+
+		///<summary>
 		/// Session Type
 		/// <para>Name: SessionType</para>
 		/// <para>SF Type: picklist</para>
@@ -195,6 +205,16 @@ namespace NetCoreForce.Models
 		[JsonProperty(PropertyName = "isCurrent")]
 		[Updateable(false), Createable(false)]
 		public bool? IsCurrent { get; set; }
+
+		///<summary>
+		/// Associated With Jwt
+		/// <para>Name: IsAssociatedWithJwtAccessToken</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "isAssociatedWithJwtAccessToken")]
+		[Updateable(false), Createable(false)]
+		public bool? IsAssociatedWithJwtAccessToken { get; set; }
 
 	}
 }

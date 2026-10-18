@@ -1,4 +1,4 @@
-// SF API version v50.0
+// SF API version v67.0
 // Custom fields included: False
 // Relationship objects included: True
 
@@ -10,7 +10,7 @@ using Newtonsoft.Json;
 namespace NetCoreForce.Models
 {
 	///<summary>
-	/// Auth. Provider
+	/// Authentication Provider
 	///<para>SObject Name: AuthProvider</para>
 	///<para>Custom Object: False</para>
 	///</summary>
@@ -23,7 +23,7 @@ namespace NetCoreForce.Models
 		}
 
 		///<summary>
-		/// Auth. Provider ID
+		/// Authentication Provider ID
 		/// <para>Name: Id</para>
 		/// <para>SF Type: id</para>
 		/// <para>Nillable: False</para>
@@ -188,13 +188,112 @@ namespace NetCoreForce.Models
 		public bool? OptionsIncludeOrgIdInId { get; set; }
 
 		///<summary>
-		/// Include Consumer Secret in API Responses
+		/// Include Consumer Secret in SOAP API Responses
 		/// <para>Name: OptionsSendSecretInApis</para>
 		/// <para>SF Type: boolean</para>
 		/// <para>Nillable: False</para>
 		///</summary>
 		[JsonProperty(PropertyName = "optionsSendSecretInApis")]
 		public bool? OptionsSendSecretInApis { get; set; }
+
+		///<summary>
+		/// isMuleSoftUS
+		/// <para>Name: OptionsIsMuleSoftUS</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "optionsIsMuleSoftUS")]
+		public bool? OptionsIsMuleSoftUS { get; set; }
+
+		///<summary>
+		/// isMuleSoftEU
+		/// <para>Name: OptionsIsMuleSoftEU</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "optionsIsMuleSoftEU")]
+		public bool? OptionsIsMuleSoftEU { get; set; }
+
+		///<summary>
+		/// requireMfa
+		/// <para>Name: OptionsRequireMfa</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "optionsRequireMfa")]
+		public bool? OptionsRequireMfa { get; set; }
+
+		///<summary>
+		/// IsSegmentIntelligence
+		/// <para>Name: OptionsIsSegmentIntelligence</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "optionsIsSegmentIntelligence")]
+		public bool? OptionsIsSegmentIntelligence { get; set; }
+
+		///<summary>
+		/// isPkceEnabled
+		/// <para>Name: OptionsIsPkceEnabled</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "optionsIsPkceEnabled")]
+		public bool? OptionsIsPkceEnabled { get; set; }
+
+		///<summary>
+		/// IsWebDataConnector
+		/// <para>Name: OptionsIsWebDataConnector</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "optionsIsWebDataConnector")]
+		public bool? OptionsIsWebDataConnector { get; set; }
+
+		///<summary>
+		/// isBitbucket
+		/// <para>Name: OptionsIsBitbucket</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "optionsIsBitbucket")]
+		public bool? OptionsIsBitbucket { get; set; }
+
+		///<summary>
+		/// IsEmiSnapchatAds
+		/// <para>Name: OptionsIsEmiSnapchatAds</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "optionsIsEmiSnapchatAds")]
+		public bool? OptionsIsEmiSnapchatAds { get; set; }
+
+		///<summary>
+		/// IsEmi
+		/// <para>Name: OptionsIsEmi</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "optionsIsEmi")]
+		public bool? OptionsIsEmi { get; set; }
+
+		///<summary>
+		/// IsEmiTikTokAds
+		/// <para>Name: OptionsIsEmiTikTokAds</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "optionsIsEmiTikTokAds")]
+		public bool? OptionsIsEmiTikTokAds { get; set; }
+
+		///<summary>
+		/// IsLinkedInV2
+		/// <para>Name: OptionsIsLinkedInV2</para>
+		/// <para>SF Type: boolean</para>
+		/// <para>Nillable: False</para>
+		///</summary>
+		[JsonProperty(PropertyName = "optionsIsLinkedInV2")]
+		public bool? OptionsIsLinkedInV2 { get; set; }
 
 		///<summary>
 		/// Icon URL
@@ -249,6 +348,24 @@ namespace NetCoreForce.Models
 		///</summary>
 		[JsonProperty(PropertyName = "appleTeam")]
 		public string AppleTeam { get; set; }
+
+		///<summary>
+		/// Profile ID
+		/// <para>Name: FlowDefaultProfileId</para>
+		/// <para>SF Type: reference</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "flowDefaultProfileId")]
+		public string FlowDefaultProfileId { get; set; }
+
+		///<summary>
+		/// Account ID
+		/// <para>Name: FlowDefaultAccountId</para>
+		/// <para>SF Type: reference</para>
+		/// <para>Nillable: True</para>
+		///</summary>
+		[JsonProperty(PropertyName = "flowDefaultAccountId")]
+		public string FlowDefaultAccountId { get; set; }
 
 		///<summary>
 		/// Single Sign-On Initialization URL
